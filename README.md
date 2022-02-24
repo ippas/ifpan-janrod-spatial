@@ -1,4 +1,4 @@
-# Project title (institute-name-subject)
+# Project title (ifpan-janrod-spatial)
 
 #### Project logline (technique, organism, tissue type)
 Short description of treatment groups/subjects
@@ -24,3 +24,4 @@ Directories:
 - data - useful data, created by scripts/tools/preprocessing
 - analysis - analysis source code
 - results - output ready to present
+- tools - downoload tools
