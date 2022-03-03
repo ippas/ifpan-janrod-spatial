@@ -3,60 +3,6 @@
 ## mateuszzieba97@gmail.com - Feb 2022
 #############################################################
 
-lapply(samples_name, 
-       function(x) paste("data/spaceranger-corrected/", 
-                         x, 
-                         "/outs/spatial/tissue_lowres_image.png",
-                         sep = "") %>%
-         read.bitmap(.)) -> images_cl
-
-
-###############################
-# Convert the Images to grobs #
-###############################
-lapply(images_cl, 
-       function(x) rasterGrob(x, 
-                              width = unit(1, "npc"),
-                              height = unit(1, "npc"))) %>%
-  tibble(sample=factor(samples_name), grob =.) %>%
-  mutate(height = (rapply(images_cl, 
-                          function(x) data.frame(height = nrow(x)))),
-         width = (rapply(images_cl,
-                        function(x) data.frame(weight = ncol(x))))) -> images_tibble
-
-
-# create table bcs_merge containing information about barcode spots
-# for all samples
-lapply(samples_name,
-       # load data about position tissue
-       function(x, y = x) read.csv(
-         paste("data/spaceranger-corrected/", 
-               x, 
-               "/outs/spatial/tissue_positions_list.csv",
-               sep = ""),
-         col.names=c("barcode","tissue","row","col","imagerow","imagecol"), 
-         header = FALSE) %>% 
-         
-         mutate(
-           imagerow = imagerow * (paste("data/spaceranger-corrected/", 
-                                        x, 
-                                        "/outs/spatial/scalefactors_json.json",
-                                        sep = "") %>%
-                                    rjson::fromJSON(file = .) %>% 
-                                    .$tissue_lowres_scalef),
-           imagecol = imagecol * (paste("data/spaceranger-corrected/", 
-                                        x, 
-                                        "/outs/spatial/scalefactors_json.json",
-                                        sep = "") %>%
-                                    rjson::fromJSON(file = .) %>% 
-                                    .$tissue_lowres_scalef),
-           tissue = as.factor(tissue),
-           height = images_tibble[images_tibble$sample == x,]$height,
-           width = images_tibble[images_tibble$sample == x,]$width
-         )
-       ) %>% 
-  setNames(samples_name) %>% 
-  bind_rows(., .id = "sample") -> bcs_merge
 
 
 ##### testing code to refresh how visualize data
@@ -90,5 +36,12 @@ plot_feature(data_cluster = data_cluster,
 
 
 
-
+spatial_feature_plot(spatial_data = spatial_transcriptomic_data,
+                     type_modification = "range_normalize",
+                     peak_id = "merged-samples-peak-173070",
+                     samples = samples_name,
+                     min_percentile = 0.05,
+                     max_percentile = 0.99,
+                     size = 1,
+                     normalization = TRUE)
 
