@@ -105,9 +105,9 @@ spatial_feature_plot <- function(data,
                                  size = 1.2,
                                  normalization = TRUE){
   
-  normalize <- function(x) {
-    return((x - min(x)) / (max(x) - min(x)))
-  }
+  # normalize <- function(x) {
+  #   return((x - min(x)) / (max(x) - min(x)))
+  # }
   
   # prepare data to create plot
   preprocessing_data <- data[peak_id, ] %>%
@@ -115,7 +115,8 @@ spatial_feature_plot <- function(data,
     rename(value = ".") %>% 
     rownames_to_column("sample_barcode") %>%
     separate("sample_barcode", c("sample", "barcode"), sep = "_") %>%
-    left_join(., data_cluster, by = c("barcode", "sample")) %>%
+    # left_join(., data_cluster, by = c("barcode", "sample")) %>%
+    left_join(., bcs_merge, by = c("barcode", "sample")) %>%
     mutate(max_perc = as.numeric(quantile(value, probs = c(max_percentile))),
            min_perc = as.numeric(quantile(value, probs = c(min_percentile))),
            # trimming the extreme values to the adopted percentiles
@@ -123,7 +124,7 @@ spatial_feature_plot <- function(data,
            value = ifelse(value > min_perc, value, min_perc),
            # zero one normalization if normalization = TRUE
            value = if (normalization == TRUE){
-             normalize(value)
+             (value - min(value)) / (max(value) - min(value))
            } else {
              value
            })
@@ -182,7 +183,7 @@ spatial_feature_plot <- function(data,
 
 spatial_feature_plot(data = colfilt_norm_data,
                      data_cluster = data_cluster,
-                     samples = samples_name[3:6],
+                     samples = samples_name,
                      peak_id = "merged-samples-peak-173070",
                      barcode_data = bcs_merge,
                      images_tibble = images_tibble,
