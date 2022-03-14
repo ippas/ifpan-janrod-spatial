@@ -7,6 +7,7 @@ import csv
 import os
 import pandas as pd
 import sys
+import argparse
 
 
 def create_gtf_gene(data_frame):
@@ -41,35 +42,16 @@ def create_gtf_gene(data_frame):
 
     return list_gtf_gene
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", dest = "inputfile")
+parser.add_argument("-o", "--output", dest = "outputfile")
 
+args = parser.parse_args()
 
-input_bed = sys.argv[1]
+input_file = args.inputfile
+output_file = args.outputfile
 
-
-# import file bed which will be convert to gtf file
-bed_to_gtf = pd.read_csv(input_bed,
-                         sep='\t',
-                         index_col=False,
-                         names=['chromosome1',
-                                'start_peak',
-                                'end_peak',
-                                'peak_id',
-                                'score_int(-10*log10pvalue)',
-                                'strand_coverage',
-                                'fold_change_peak_summit',
-                                '-log10pvalue_peak_summit',
-                                '-log10qvalue_peak_summit',
-                                'relative_summit_position_peak_start',
-                                'type_peak',
-                                'chromosome2',
-                                'start_gene',
-                                'end_gene',
-                                'gene_id',
-                                'gene_name',
-                                'strand_gene']) \
-    .drop(columns=["chromosome2"]) \
-    .rename(columns={'chromosome1': 'chromosome'}) \
-    .replace({-1: "-", 1: "+"})
+bed_to_gtf = pd.read_csv(input_file, sep='\t')
 
 # print(bed_to_gtf[bed_to_gtf.duplicated(subset=['peak_id', 'gene_name'], keep=False)])
 df_gtf_all = pd.DataFrame()
@@ -102,7 +84,7 @@ with open('tmp_file2.tsv') as fp:
 
 data += data2
 
-with open('data/gene-annotation/peaks-annotate.gtf', 'w') as fp:
+with open(output_file, 'w') as fp:
     fp.write(data)
 
 os.remove("tmp_file1.txt")
