@@ -3,15 +3,44 @@
 ## mateuszzieba97@gmail.com - Feb 2022
 #############################################################
 
-
-
-##### testing code to refresh how visualize data
+# visualization of UMAP
 resolution = 0.2
 data_cluster <- FindClusters(integrated_analysis, resolution = resolution)
 
 DimPlot(data_cluster, reduction = "umap", 
         split.by = "sample", ncol = 4)
 
+DimPlot(data_cluster, reduction = "umap", 
+        ncol = 4)
+
+# visualize clusters
+spatial_cluster(seurat_object = integrated_analysis,
+                spatial_data = spatial_transcriptomic_data,
+                resolution = 0.2,
+                samples = samples_name,
+                palette = palette_cluster, 
+                size= 1)
+
+# visualize features 
+
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_modification = "range_normalize",
+                  gene = "Homer1",
+                  samples = samples_name,
+                  min_percentile = 0.05,
+                  max_percentile = 0.99,
+                  size = 1,
+                  normalization = TRUE)
+
+
+
+# visualize genes using seurat
+spatial_gene_plot_seurat(data = spatial_transcriptomic_data$raw_data$annotate, 
+                         gene = "Mag")
+
+
+
+# old code
 
 data_cluster <- FindClusters(integrated_analysis, resolution = resolution) %>% 
   .$seurat_clusters %>%

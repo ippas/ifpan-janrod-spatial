@@ -325,9 +325,9 @@ column_names <- info_peaks_reduction %>%
 # for minus strand not detect duplicate peak_id
 info_peaks_reduction %>% 
   group_by(across(all_of(column_names))) %>%
-  summarise(gene_name = str_c(gene_name, collapse = "; "),
-            gene_id = str_c(gene_id, collapse = "; "),
-            start_gene = str_c(start_gene, collapse = "; ")) %>%
+  summarise(gene_name = str_c(gene_name, collapse = ", "),
+            gene_id = str_c(gene_id, collapse = ", "),
+            start_gene = str_c(start_gene, collapse = ", ")) %>%
   as.data.frame() %>% 
   # save to file
   write.table(., 

@@ -1,3 +1,7 @@
+###############################
+# function to display barcode #
+###############################
+
 geom_spatial <-  function(mapping = NULL,
                           data = NULL,
                           stat = "identity",
@@ -40,6 +44,10 @@ geom_spatial <-  function(mapping = NULL,
 
 myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
 
+###############################################
+# prepare function to visualize interest peak #
+###############################################
+
 spatial_feature_plot <- function(spatial_data,
                                  type_modification,
                                  peak_id,
@@ -79,7 +87,7 @@ spatial_feature_plot <- function(spatial_data,
     sample_plot <- filter(preprocessing_data, sample == samples[i]) %>%
       # main part of creating plot
       {ggplot(., aes(x = imagecol, y = imagerow, fill = value)) +
-          geom_spatial(data = images_tibble[spatial_data$images_information$sample == samples[i],],
+          geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == samples[i],],
                        aes(grob = grob),
                        x = 0.5, y = 0.5) +
           geom_point(shape = 21, colour = "black", size = size, stroke = 0.25) +
@@ -123,6 +131,128 @@ spatial_feature_plot <- function(spatial_data,
   
 }
 
+
+
+#########################################
+# prepare function to visualize cluster #
+#########################################
+
+spatial_cluster <- function(seurat_object,
+                            spatial_data,
+                            resolution,
+                            samples,
+                            palette, 
+                            size= 1.2){
+  
+  # prepare data for plots
+  data_cluster <- FindClusters(seurat_object, resolution = resolution) %>% 
+    .$seurat_clusters %>%
+    as.data.frame() %>% 
+    rename(cluster = ".") %>% 
+    rownames_to_column(var = "sample_barcode") %>%
+    separate("sample_barcode", c("sample", "barcode"), sep = "_") %>% 
+    left_join(., spatial_data$bcs_information, by = c("barcode", "sample"))
+  
+  plot_list <- list()
+
+  # prepare list of plots
+  for (i in 1:length(samples)){
+    sample_plot <- filter(data_cluster, sample == samples[i]) %>%
+      {ggplot(., aes(x = imagecol, y = imagerow, fill = factor(cluster))) +
+          geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == samples[i],],
+                       aes(grob = grob),
+                       x = 0.5, y = 0.5) +
+          geom_point(shape = 21, colour = "black", size = size, stroke = 0.25)+
+          coord_cartesian(expand = FALSE) +
+          scale_fill_manual(values = palette)+
+          xlim(0, max(spatial_data$bcs_information %>%
+                        filter(sample == samples[i]) %>%
+                        select(width)))+
+          ylim(max(spatial_data$bcs_information %>%
+                     filter(sample == samples[i]) %>%
+                     select(height)), 0) +
+          # aesthetics plot
+          xlab("") +
+          ylab("") +
+          ggtitle(samples_name[i])+
+          guides(fill = guide_legend(override.aes = list(size=3)))+
+          theme_set(theme_bw(base_size = 10))+
+          theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(colour = "black"),
+                axis.text = element_blank(),
+                axis.ticks = element_blank()) +
+          NoLegend()
+      }
+    
+    plot_list[[samples[i]]] <- sample_plot
+    
+  }
+  
+  wrap_plot <- wrap_plots(plot_list) #+
+    #plot_layout(ncol = 3, guides = "collect")
+  
+  rm(plot_list,
+     preprocessing_data)
+  
+  return(wrap_plot)
+  
+}
+
+
+
+spatial_cluster(seurat_object = integrated_analysis,
+                spatial_data = spatial_transcriptomic_data,
+                resolution = 0.2,
+                samples = samples_name,
+                palette = palette_cluster, 
+                size= 1)
+
+########################################################
+# prepare function to visualize peaks discribe to gene #
+########################################################
+
+spatial_gene_plot <- function(spatial_data,
+                              type_modification,
+                              ...,
+                              gene,
+                              filt_score_int = 1000){
+  
+  spatial_data[[if(type_modification=="range_normalize"){
+    "colfilt_data"
+  } else {
+    type_modification
+  }]]$annotate %>%
+    filter(gene_name == gene) %>%
+    filter(score_int..10.log10pvalue. > filt_score_int) %>%
+    select(peak_id) %>% .[,1] -> vector_peak
+  
+  for(peak in vector_peak){
+    spatial_feature_plot(spatial_data = spatial_data,
+                         type_modification = type_modification,
+                         peak_id = peak,
+                         ...) + 
+      plot_layout(ncol = 3, guides = "collect") + 
+      plot_annotation(title = paste(gene, peak, sep = ": ")) -> peak_plot
+    print(peak_plot)  
+  }
+  
+  rm(vector_peak,
+     peak_plot)
+}
+
+
+
+# visualize features 
+spatial_feature_plot(spatial_data = spatial_transcriptomic_data,
+                     type_modification = "range_normalize",
+                     peak_id = "merged-samples-peak-173070",
+                     samples = samples_name,
+                     min_percentile = 0.05,
+                     max_percentile = 0.99,
+                     size = 1,
+                     normalization = TRUE)
 
 
 
