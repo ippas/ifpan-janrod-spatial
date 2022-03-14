@@ -75,7 +75,7 @@ spatial_gene_plot_seurat <- function(data, gene, filt_score_int = 1000){
   # filt_score_int threshold to filter peaks using metrics from MACS3
   
   # find peaks for interest gene, and using filter threshold for peaks
-  data %>% 
+  data %>%
     filter(gene_name == gene) %>%
     filter(score_int..10.log10pvalue. > filt_score_int) %>%
     select(peak_id) %>% .[,1] -> vector_peak
@@ -84,13 +84,15 @@ spatial_gene_plot_seurat <- function(data, gene, filt_score_int = 1000){
   for(peak in vector_peak){
     spatial_feature_plot_seurat(object = integrated_analysis,
                          features = c(peak),
-                         samples = samples_name) %>% 
-      print()
+                         samples = samples_name) +
+      plot_annotation(title = paste(gene, peak, sep = ": ")) -> peak_plot 
+      print(peak_plot)
+      
+   rm(peak_plot)   
   }
 }
 
 
-spatial_gene_plot_seurat(data = spatial_transcriptomic_data$raw_data$annotate, gene = "Mag")
 
 
 
