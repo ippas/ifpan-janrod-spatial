@@ -54,45 +54,65 @@ fi
 # samtools bedcov $tmp_dir/tmp-peaks-gene.bed $tmp_dir/tmp-merged-samples-plus.bam > $tmp_dir/tmp-peaks-gene-coverage-plus.bed
 
 
-echo "6. Strand assesment for ltr"
-# strand assesment for peaks ltr based on minus and plus coverage
-# paste plus and minus coverage together for ltr
-paste $tmp_dir/tmp-peaks-ltr-coverage-plus.bed $tmp_dir/tmp-peaks-ltr-coverage-minus.bed |
-    awk '{print $0"\t+"$12-$24}' |
-    awk 'BEGIN{FS=OFS"\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
-    awk -F"\t" '{OFS=FS}{ $6=$25 ; print   }' |
-    cut -f1-11 > $tmp_dir/tmp-peaks-ltr-strand.bed
+# echo "6. Strand assesment for ltr"
+# # strand assesment for peaks ltr based on minus and plus coverage
+# # paste plus and minus coverage together for ltr
+# paste $tmp_dir/tmp-peaks-ltr-coverage-plus.bed $tmp_dir/tmp-peaks-ltr-coverage-minus.bed |
+#     awk '{print $0"\t+"$12-$24}' |
+#     awk 'BEGIN{FS=OFS"\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
+#     awk -F"\t" '{OFS=FS}{ $6=$25 ; print   }' |
+#     cut -f1-11 > $tmp_dir/tmp-peaks-ltr-strand.bed
 
 
-echo "7. Strand assesment for genes"
-# strand assesment fo peaks gene based on minus and plus coverage
-# paste plus and minus coverage together for genes
-paste $tmp_dir/tmp-peaks-gene-coverage-plus.bed $tmp_dir/tmp-peaks-gene-coverage-minus.bed |
-    awk '{print $0"\t+"$12-$24}' |
-    awk 'BEGIN{FS=OFS"\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
-    awk -F"\t" '{OFS=FS}{ $6=$25 ; print   }' |
-    cut -f1-11  > $tmp_dir/tmp_peaks_gene_strand.bed
+# echo "7. Strand assesment for genes"
+# # strand assesment fo peaks gene based on minus and plus coverage
+# # paste plus and minus coverage together for genes
+# paste $tmp_dir/tmp-peaks-gene-coverage-plus.bed $tmp_dir/tmp-peaks-gene-coverage-minus.bed |
+#     awk '{print $0"\t+"$12-$24}' |
+#     awk 'BEGIN{FS=OFS"\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
+#     awk -F"\t" '{OFS=FS}{ $6=$25 ; print   }' |
+#     cut -f1-11  > $tmp_dir/tmp-peaks-gene-strand.bed
 
 
 echo "8. Prepare bed file with ltr ang genes which will convert to gtf format."
 # sort mart-export-v10bed2-mm10.bed
-bedtools sort -i $data_dir/mart-export-v102-mm10.bed  > $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed
+bedtools sort -i $data_dir/mart-export-v102-mm10.bed \
+  | uniq >  $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed
 
-# using peaks which are defined to genes chose the closest peak to gene 
+# using peaks which are defined to genes chose the intersect peak to gene in +/-30000 range from gene 
 # peaks are describtion to nearest gene -> assesment strand with the same way as for ltr
-bedtools closest \
+bedtools intersect \
   -a $tmp_dir/tmp-peaks-gene-strand.bed \
-  -b $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed \
-  -t first 2>/dev/null \
+  -b <( cat $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed | \
+    awk 'BEGIN{OFS = "\t"} {print $1, $2-30000, $3+30000, $4, $5, $6, $2, $3}' | \
+    awk 'BEGIN{OFS = "\t"} {if ($6=="-1") {$6="-"} else {$6="+"}}1') \
+  -wa -wb -s  2>/dev/null | \
+  awk 'BEGIN{OFS = "\t"}{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $18, $19, $15, $16, $17}' \
   > $tmp_dir/tmp-peaks2gtf-gene.bed
 
-# using peaks which are defined to ltr chose the closest peak to gene
+
+# bedtools closest \
+#   -a $tmp_dir/tmp-peaks-gene-strand.bed \
+#   -b $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed \
+#   -t first 2>/dev/null \
+#   > $tmp_dir/tmp-peaks2gtf-gene.bed
+
+# using peaks which are defined to ltr chose the intersect peak to gene in +/-30000 range from gene
 # ltr are describtion to nearest gene
-bedtools closest \
+bedtools intersect \
   -a $tmp_dir/tmp-peaks-ltr-strand.bed \
-  -b $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed \
-  -t first 2>/dev/null \
+  -b <( cat $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed | \
+    awk 'BEGIN{OFS = "\t"} {print $1, $2-30000, $3+30000, $4, $5, $6, $2, $3}' | \
+    awk 'BEGIN{OFS = "\t"} {if ($6=="-1") {$6="-"} else {$6="+"}}1') \
+  -wa -wb -s  2>/dev/null | \
+  awk 'BEGIN{OFS = "\t"}{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $18, $19, $15, $16, $17}' \
   > $tmp_dir/tmp-peaks2gtf-ltr.bed
+
+# bedtools closest \
+#   -a $tmp_dir/tmp-peaks-ltr-strand.bed \
+#   -b $tmp_dir/tmp-mart-export-v102-mm10-sorted.bed \
+#   -t first 2>/dev/null \
+#   > $tmp_dir/tmp-peaks2gtf-ltr.bed
 
 echo "9. Conect file bed for ltr and gene"
 # conect together peaks for ltr and genes
