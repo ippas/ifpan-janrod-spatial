@@ -325,10 +325,11 @@ column_names <- info_peaks_reduction %>%
 # for minus strand not detect duplicate peak_id
 info_peaks_reduction %>% 
   group_by(across(all_of(column_names))) %>%
-  summarise(gene_name = str_c(gene_name, collapse = ", "),
+  summarise(start_gene = str_c(start_gene, collapse = ", "),
             gene_id = str_c(gene_id, collapse = ", "),
-            start_gene = str_c(start_gene, collapse = ", ")) %>%
+            gene_name = str_c(gene_name, collapse = ", ")) %>%
   as.data.frame() %>% 
+  .[, c(1:12, 19, 13,20, 21, 14:18)] %>%
   # save to file
   write.table(., 
               file='data/gene-annotation/peaks-annotate-reduction.tsv', 

@@ -16,7 +16,7 @@ DimPlot(data_cluster, reduction = "umap",
 # visualize clusters
 spatial_cluster(seurat_object = integrated_analysis,
                 spatial_data = spatial_transcriptomic_data,
-                resolution = 0.2,
+                resolution = 1,
                 samples = samples_name,
                 palette = palette_cluster, 
                 size= 1)
@@ -24,19 +24,56 @@ spatial_cluster(seurat_object = integrated_analysis,
 # visualize features 
 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-                  type_modification = "range_normalize",
-                  gene = "Homer1",
+                  type_modification = "raw_data",
+                  gene = "Junb",
                   samples = samples_name,
-                  min_percentile = 0.05,
-                  max_percentile = 0.99,
+                  min_percentile = 0.00,
+                  max_percentile = 1,
                   size = 1,
-                  normalization = TRUE)
+                  filt_score_int = 0,
+                  normalization = F) 
 
 
+genetoplot = "Arc"
+
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_modification = "raw_data",
+                  gene = genetoplot,
+                  samples = samples_name,
+                  min_percentile = 0.0,
+                  max_percentile = 1,
+                  size = 1,
+                  filt_score_int = 0,
+                  normalization = T) 
+
+
+
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_modification = "range_normalize",
+                  gene = genetoplot,
+                  samples = samples_name,
+                  min_percentile = 0.0,
+                  max_percentile = 1,
+                  size = 1,
+                  filt_score_int = 0,
+                  normalization = T)
+
+
+
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_modification = "seurat",
+                  gene = genetoplot,
+                  samples = samples_name,
+                  min_percentile = 0.0,
+                  max_percentile = 1,
+                  size = 1,
+                  filt_score_int = 0,
+                  normalization = T)
 
 # visualize genes using seurat
 spatial_gene_plot_seurat(data = spatial_transcriptomic_data$raw_data$annotate, 
-                         gene = "Mag")
+                         gene = "",
+                         filt_score_int = 0)
 
 
 

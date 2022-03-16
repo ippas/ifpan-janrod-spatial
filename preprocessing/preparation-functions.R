@@ -247,10 +247,10 @@ spatial_gene_plot <- function(spatial_data,
 # visualize features 
 spatial_feature_plot(spatial_data = spatial_transcriptomic_data,
                      type_modification = "range_normalize",
-                     peak_id = "merged-samples-peak-173070",
+                     peak_id = "merged-samples-peak-19995",
                      samples = samples_name,
-                     min_percentile = 0.05,
-                     max_percentile = 0.99,
+                     min_percentile = 0,
+                     max_percentile = 1,
                      size = 1,
                      normalization = TRUE)
 
