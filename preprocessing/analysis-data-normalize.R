@@ -32,8 +32,8 @@ spatial_transcriptomic_data$raw_data$metadata <- integrated_analysis@meta.data %
 spatial_transcriptomic_data$raw_data$annotate <- info_peaks[match(str_replace_all(rownames(integrated_analysis@assays$RNA@counts ), "_", "-"), 
                                                                   str_replace_all(info_peaks$peak_id, "_", "-")),] %>%
    # check strange agree between coverage and gene
-   mutate(peak_id = str_replace_all(peak_id, "_", "-")) %>% 
-   mutate(strand_agree = as.numeric(paste(strand_coverage, "1", sep = "")) == strand_gene)
+   mutate(peak_id = str_replace_all(peak_id, "_", "-")) # %>% to remove, because strand peak agree with gene in each peak 
+   # mutate(strand_agree = as.numeric(paste(strand_coverage, "1", sep = "")) == strand_gene)
 
 # sparse matrix contain expression data
 spatial_transcriptomic_data$raw_data$data <- integrated_analysis@assays$RNA@counts 
@@ -44,10 +44,12 @@ spatial_transcriptomic_data$raw_data$simple_statistics <- data.frame(median = pb
 
 
 # add list with filter data contain:
-# create vector with index to filter 
-spatial_transcriptomic_data$filtered_data$filter_index <- which(spatial_transcriptomic_data$raw_data$annotate$strand_agree & spatial_transcriptomic_data$raw_data$simple_statistics$mean > 0.05)
+# create vector with index to filter
+# spatial_transcriptomic_data$filtered_data$filter_index <- which(spatial_transcriptomic_data$raw_data$annotate$strand_agree & spatial_transcriptomic_data$raw_data$simple_statistics$mean > 0.05)
 
-spatial_transcriptomic_data$filtered_data$metadata <- spatial_transcriptomic_data$raw_data$metadata 
+spatial_transcriptomic_data$filtered_data$filter_index <- which(spatial_transcriptomic_data$raw_data$simple_statistics$mean > 0.05)
+
+spatial_transcriptomic_data$filtered_data$metadata <- spatial_transcriptomic_data$raw_data$metadata
 
 spatial_transcriptomic_data$filtered_data$annotate <- spatial_transcriptomic_data$raw_data$annotate[spatial_transcriptomic_data$filtered_data$filter_index, ]
 
@@ -76,73 +78,16 @@ range_normalize <- function(x, range = 500) {
 threshold = 500
 
 spatial_transcriptomic_data$range_normalize$data <- apply(
-   spatial_transcriptomic_data$colfilt_data$data, 1, 
+   as.matrix(spatial_transcriptomic_data$colfilt_data$data), 1, 
    range_normalize) %>% t
 
 colnames(spatial_transcriptomic_data$range_normalize$data) <- colnames(spatial_transcriptomic_data$colfilt_data$data)
 
 
 
-# For all features
-sample_data_all <- integrated_analysis@assays$RNA@counts %>% as.matrix()
+spatial_transcriptomic_data$seurat$data <- integrated_analysis@assays$RNA@data 
 
-# sample.data.all.normalize <- integrated.analysis.cluster@assays$RNA@data %>% as.matrix()
-
-sample_anno_all <- info_peaks[match(str_replace_all(rownames(sample_data_all), "_", "-"), 
-                                    str_replace_all(info_peaks$peak_id, "_", "-")),] %>%
-  mutate(peak_id = str_replace_all(peak_id, "_", "-"))
-
-sample_info_all <- integrated_analysis@meta.data %>% 
-  left_join(., meta_data, by = c("sample" = "sample_ID"))
-
-
-
-
-######################
-# Normalization data #
-######################
-results <- data.frame(median = pbapply(sample_data_all, 1, median))
-results$mean <- pbapply(sample_data_all, 1, mean)
-
-sample_anno_all$strand_agree <- as.numeric(paste(sample_anno_all$strand_coverage, "1", sep = "")) == sample_anno_all$strand_gene
-
-filtered_wh <- which(sample_anno_all$strand_agree & results$mean > 0.05)
-filtered_anno <- sample_anno_all[filtered_wh,]
-filtered_data <- sample_data_all[filtered_wh,]
-filtered_info <- sample_info_all
-
-filtered_info$over_2 <- apply(filtered_data, 2, function(x){sum(x > 2)})
-
-threshold <- 500
-
-colfilt_wh <- which(filtered_info$over_2 > 0)
-colfilt_anno <- filtered_anno
-colfilt_data <- filtered_data[,colfilt_wh]
-colfilt_info <- filtered_info[colfilt_wh,]
-
-range_normalize <- function(x, range = 500) {
-  wh <- which(x > 1)
-  order <- order(x[wh], decreasing = T)
-  len <- length(wh)
-  out <- x
-  out[wh[order[1:(len - 1)]]] <- (len):2 
-  out
-}
-
-colfilt_norm_data <- apply(colfilt_data, 1, range_normalize, threshold) %>% t
-
-colnames(colfilt_norm_data) <- colnames(colfilt_data)
-
-rm(threshold,
-   colfilt_anno,
-   colfilt_info,
-   colfilt_data,
-   filtered_anno,
-   filtered.data,
-   filtered.info,
-   filtered.wh,
-   colfilt.wh
-   )
+spatial_transcriptomic_data$seurat$annotate <- spatial_transcriptomic_data$raw_data$annotate
 
 
 

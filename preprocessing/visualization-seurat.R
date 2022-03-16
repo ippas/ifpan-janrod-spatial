@@ -97,16 +97,6 @@ spatial_gene_plot_seurat <- function(data, gene, filt_score_int = 1000){
 
 
 
-spatial_transcriptomic_data$raw_data$annotate %>%
-filter(gene_name == "Mag") %>%
-  filter(score_int..10.log10pvalue. > 1000) %>%
-  select(peak_id) %>% .[,1]
-
-
-
-
-
-
 
 
 
