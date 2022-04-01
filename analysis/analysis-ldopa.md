@@ -15,7 +15,7 @@ Prepare index file for merged-samples.bam using:
 samtools index data/gene-annotation/ldopa/merged-samples.bam
 ```
 
-#### Analysis MACS3
+#### Analysis [MACS3](https://github.com/macs3-project/MACS)
 Command to run macs3 analysis from docker:
 ```
 docker run \
