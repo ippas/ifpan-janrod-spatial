@@ -37,7 +37,7 @@ Script arguments:
   - -\-data-dir	- indicate where are needed files and output dir for `peaks-annotate-sort.bed`
   - -\-number-threads - number of threads to use 
 
-#####[bed2gtf-spaceranger.py](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/bed2gtf-spaceranger.py)
+##### [bed2gtf-spaceranger.py](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/bed2gtf-spaceranger.py)
 The script convert `bed` to `gtf` file.
 
 Script arguments:
