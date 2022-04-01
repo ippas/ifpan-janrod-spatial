@@ -10,7 +10,7 @@ This sections should be a description of preprocessin and analysis ready to be i
 
 ## Preprocessing
 #### Information about scripts
-##### [spaceranger-analysis.sh]()
+##### [spaceranger-analysis.sh](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/spaceranger-analysis.sh)
 Script automates the execution of the `spacerange count` analysis for multi-sample using `samples-spatial-metadata.tsv` file contains metadata about samples.
 
 Script arguments:
@@ -18,7 +18,7 @@ Script arguments:
 - -\-output-dir - indicate output dir of results
 - -\-samples - indicate for samples execute spaceranger count analysis. Set many samples using comma separated
 
-##### [prepare-annotate-peaks.sh]() 
+##### [prepare-annotate-peaks.sh](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/prepare-annotate-peaks.sh) 
 The script contains commands which prepare a file with annotated peaks:
  - To assess peaks detected by `macs3` was used bedtools intersect and `ltr-grcm38-mm10.bed` file. If the peak intersected with any ltr in `bed` file was assigned to ltr if not was assigned to gene ant results were saved to `bed` file. 
  - Using samtools prepare a `bam` file and index `bam.bai` them with minus ad plus strand for `merged-samples.bam`.
@@ -36,6 +36,13 @@ Script arguments:
   - -\-macs-dir - indicate path to results from MACS3
   - -\-data-dir	- indicate where are needed files and output dir for `peaks-annotate-sort.bed`
   - -\-number-threads - number of threads to use 
+
+#####[bed2gtf-spaceranger.py](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/bed2gtf-spaceranger.py)
+The script convert `bed` to `gtf` file.
+
+Script arguments:
+  -  -\-input - input file
+  - -\-output - output file 
 
 ## Analysis
 ### Prepare spaceranger
@@ -72,9 +79,10 @@ To execute the first analysis in spaceranger run command:
 bash preprocessing/spaceranger-analysis.sh \
   --transcriptome raw/refdata-gex-mm10-2020-A/ \
   --output-dir data/spaceranger/
+  --samples `cat data/samples-spatial-metadata.tsv | sed 1d | cut -f1 | tr "\n" "," | sed 's/,$/\n/'
 ```
 
-### [Analysis ldopa]()
+### [Analysis ldopa](https://github.com/ippas/ifpan-janrod-spatial/blob/master/analysis/analysis-ldopa.md)
 
 
 
