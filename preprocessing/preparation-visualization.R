@@ -4,7 +4,7 @@
 #############################################################
 
 # visualization of UMAP
-resolution = 0.2
+resolution = 1
 data_cluster <- FindClusters(integrated_analysis, resolution = resolution)
 
 DimPlot(data_cluster, reduction = "umap", 
@@ -13,28 +13,34 @@ DimPlot(data_cluster, reduction = "umap",
 DimPlot(data_cluster, reduction = "umap", 
         ncol = 4)
 
+# mypalette <- rep("#555555", 38)
+# names(mypalette) <- as.character(0:37)
+# mypalette["5"] <- "#00FF00"
+# palette_cluster <- mypalette
+
 # visualize clusters
 spatial_cluster(seurat_object = integrated_analysis,
                 spatial_data = spatial_transcriptomic_data,
                 resolution = 1,
                 samples = samples_name,
                 palette = palette_cluster, 
-                size= 1)
+                size= 1, 
+                ncol = 4)
 
 # visualize features 
 
-spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-                  type_modification = "raw_data",
-                  gene = "Junb",
-                  samples = samples_name,
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 1,
-                  filt_score_int = 0,
-                  normalization = F) 
+# spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+#                   type_modification = "raw_data",
+#                   gene = "Junb",
+#                   samples = samples_name,
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 1,
+#                   filt_score_int = 0,
+#                   normalization = F) 
 
 
-genetoplot = "Arc"
+genetoplot = "Oprm1"
 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
                   type_modification = "raw_data",
@@ -43,8 +49,8 @@ spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
                   min_percentile = 0.0,
                   max_percentile = 1,
                   size = 1,
-                  filt_score_int = 0,
-                  normalization = T) 
+                  normalization = T,
+                  ncol = 4) 
 
 
 

@@ -5,10 +5,10 @@
 
 meta_data <- read.table("data/samples-spatial-metadata.tsv",
                         header = TRUE,
-                        sep = "\t")
+                        sep = "\t") %>% filter(experiment == "tif-ldopa")
 
 # Require source files
-info_peaks <- read.table("data/gene-annotation/peaks-annotate-reduction.tsv", 
+info_peaks <- read.table("data/ldopa/gene-annotation/peaks-annotate-reduction.tsv", 
                          header = TRUE,
                          sep = "\t")
                          # col.names = c('chr_peak',
@@ -34,7 +34,7 @@ info_peaks <- read.table("data/gene-annotation/peaks-annotate-reduction.tsv",
 # read images #
 ###############
 lapply(samples_name, 
-       function(x) paste("data/spaceranger-corrected/", 
+       function(x) paste("data/ldopa/spaceranger-corrected/", 
                          x, 
                          "/outs/spatial/tissue_lowres_image.png",
                          sep = "") %>%
@@ -60,7 +60,7 @@ lapply(images_cl,
 lapply(samples_name,
        # load data about position tissue
        function(x, y = x) read.csv(
-         paste("data/spaceranger-corrected/", 
+         paste("data/ldopa/spaceranger-corrected/", 
                x, 
                "/outs/spatial/tissue_positions_list.csv",
                sep = ""),
@@ -68,13 +68,13 @@ lapply(samples_name,
          header = FALSE) %>% 
          
          mutate(
-           imagerow = imagerow * (paste("data/spaceranger-corrected/", 
+           imagerow = imagerow * (paste("data/ldopa/spaceranger-corrected/", 
                                         x, 
                                         "/outs/spatial/scalefactors_json.json",
                                         sep = "") %>%
                                     rjson::fromJSON(file = .) %>% 
                                     .$tissue_lowres_scalef),
-           imagecol = imagecol * (paste("data/spaceranger-corrected/", 
+           imagecol = imagecol * (paste("data/ldopa/spaceranger-corrected/", 
                                         x, 
                                         "/outs/spatial/scalefactors_json.json",
                                         sep = "") %>%

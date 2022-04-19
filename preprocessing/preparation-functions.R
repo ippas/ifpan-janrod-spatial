@@ -107,7 +107,14 @@ spatial_feature_plot <- function(spatial_data,
           # aesthetics plot
           xlab("") +
           ylab("") +
-          ggtitle(samples[i])+
+          ggtitle(
+            paste(samples_name[i], 
+                  ": ",
+                  spatial_data$sample_information$treatment[i], 
+                  ", ",
+                  spatial_data$sample_information$mouse_genotype[i],
+                  sep = "")
+          ) +
           theme_set(theme_bw(base_size = 10))+
           theme(panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
@@ -121,8 +128,7 @@ spatial_feature_plot <- function(spatial_data,
     
   }
   
-  wrap_plot <- wrap_plots(plot_list) +
-    plot_layout(ncol = 3, guides = "collect")
+  wrap_plot <- wrap_plots(plot_list)
   
   rm(plot_list,
      preprocessing_data)
@@ -142,7 +148,8 @@ spatial_cluster <- function(seurat_object,
                             resolution,
                             samples,
                             palette, 
-                            size= 1.2){
+                            size= 1.2,
+                            ncol){
   
   # prepare data for plots
   data_cluster <- FindClusters(seurat_object, resolution = resolution) %>% 
@@ -174,7 +181,14 @@ spatial_cluster <- function(seurat_object,
           # aesthetics plot
           xlab("") +
           ylab("") +
-          ggtitle(samples_name[i])+
+          ggtitle(
+            paste(samples_name[i], 
+                  ": ",
+                  spatial_data$sample_information$treatment[i], 
+                  ", ",
+                  spatial_data$sample_information$mouse_genotype[i],
+                  sep = "")
+            ) +
           guides(fill = guide_legend(override.aes = list(size=3)))+
           theme_set(theme_bw(base_size = 10))+
           theme(panel.grid.major = element_blank(),
@@ -190,11 +204,10 @@ spatial_cluster <- function(seurat_object,
     
   }
   
-  wrap_plot <- wrap_plots(plot_list) #+
-    #plot_layout(ncol = 3, guides = "collect")
+  wrap_plot <- wrap_plots(plot_list) +
+    plot_layout(ncol = ncol, guides = "collect")
   
-  rm(plot_list,
-     preprocessing_data)
+  rm(plot_list)
   
   return(wrap_plot)
   
@@ -207,7 +220,31 @@ spatial_cluster(seurat_object = integrated_analysis,
                 resolution = 0.2,
                 samples = samples_name,
                 palette = palette_cluster, 
-                size= 1)
+                size = 1,
+                ncol = 4)
+
+
+############################################################
+# prepare function for visualize interest position cluster #
+############################################################
+spatial_interest_cluster <- function(cluster,
+                                     ...){
+  mypalette <- rep("#555555", 38)
+  names(mypalette) <- as.character(0:37)
+  mypalette[cluster] <- "#00FF00"
+  
+  spatial_cluster(palette = mypalette, 
+                  ...)
+  
+}
+
+spatial_interest_cluster(cluster = 5,
+                         seurat_object = integrated_analysis,
+                         spatial_data = spatial_transcriptomic_data,
+                         resolution = 1,
+                         samples = samples_name,
+                         size= 1,
+                         ncol = 4)
 
 ########################################################
 # prepare function to visualize peaks discribe to gene #
@@ -215,17 +252,12 @@ spatial_cluster(seurat_object = integrated_analysis,
 
 spatial_gene_plot <- function(spatial_data,
                               type_modification,
+                              ncol,
                               ...,
-                              gene,
-                              filt_score_int = 1000){
+                              gene){
   
-  spatial_data[[if(type_modification=="range_normalize"){
-    "colfilt_data"
-  } else {
-    type_modification
-  }]]$annotate %>%
+  spatial_data[[type_modification]]$annotate %>%
     filter(gene_name == gene) %>%
-    filter(score_int..10.log10pvalue. > filt_score_int) %>%
     select(peak_id) %>% .[,1] -> vector_peak
   
   for(peak in vector_peak){
@@ -233,7 +265,7 @@ spatial_gene_plot <- function(spatial_data,
                          type_modification = type_modification,
                          peak_id = peak,
                          ...) + 
-      plot_layout(ncol = 3, guides = "collect") + 
+      plot_layout(ncol = ncol, guides = "collect") + 
       plot_annotation(title = paste(gene, peak, sep = ": ")) -> peak_plot
     print(peak_plot)  
   }
@@ -253,6 +285,48 @@ spatial_feature_plot(spatial_data = spatial_transcriptomic_data,
                      max_percentile = 1,
                      size = 1,
                      normalization = TRUE)
+
+
+
+
+palette_cluster <- c("0" = "#b2df8a",
+                     "1" = "#e41a1c",
+                     "2" = "#377eb8",
+                     "3" ="#4daf4a",
+                     "4" = "#ff7f00",
+                     "5" = "gold", 
+                     "6" = "#a65628", 
+                     "7" = "#999999", 
+                     "8" = "black", 
+                     "9" = "grey", 
+                     "10" = "white", 
+                     "11" = "purple",
+                     "12" = "red", 
+                     "13" = "blue", 
+                     "14" = "pink",
+                     "15" = "brown",
+                     "16" = "green",
+                     "17" = "tomato1",
+                     "18" = "yellow3",
+                     "19" = "violet",
+                     "20" = "yellowgreen",
+                     "21" = "lightblue1",
+                     "22" = "lightblue4",
+                     "23" = "lightgoldenrod3",
+                     "24" = "lightpink2",
+                     "25" = "magenta",
+                     "26" = "limegreen",
+                     "27" = "maroon",
+                     "28" = "mintcream",
+                     "29"=  "oldlace",
+                     "30" = "tan",
+                     "31" = "chartreuse",
+                     "32" = "blue4",
+                     "33" = "midnightblue",
+                     "34" = "slategray4",
+                     "35" = "snow3",
+                     "36" = "springgreen",
+                     "37" = "plum1")
 
 
 

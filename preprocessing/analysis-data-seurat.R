@@ -54,13 +54,13 @@ require(gridExtra)
 
 # Require source files
 # get list of sample
-samples_name <- list.files(path = "data/spaceranger-corrected/")
+samples_name <- list.files(path = "data/ldopa/spaceranger-corrected/")
 
 samples_name
 
 
 for(sample_name in samples_name) {
-  directory <- paste("data/spaceranger-corrected/", 
+  directory <- paste("data/ldopa/spaceranger-corrected/", 
                      sample_name, 
                      "/outs/filtered_feature_bc_matrix/", sep = "")
   print(directory)
@@ -133,7 +133,7 @@ integrated_analysis <- FindNeighbors(integrated_analysis, reduction = "pca", dim
 
 # remove varible 
 rm(list = samples_name)
-# rm(integrated_data,
-#    merged_anchors,
-#    merged_samples,
-#    merged_samples_list)
+rm(integrated_data,
+   merged_anchors,
+   merged_samples,
+   merged_samples_list)

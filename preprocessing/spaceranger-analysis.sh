@@ -13,6 +13,11 @@ while test $# -gt 0; do
                 output_dir=$1
                 shift
                 ;;
+            --samples)
+                shift
+                samples=$1
+                shift
+                ;;
             *)
                 echo "$1 is not a recognized flag!"                 
                 break;
@@ -20,6 +25,8 @@ while test $# -gt 0; do
     esac
 done  
 
+# create variable to grep many samples by grep
+grep_samples=$(echo $samples | sed 's/,/\|/g; s/^/"|/; s/$/|"/')
 
 # output_dir="data/spaceranger/"
 
@@ -29,8 +36,11 @@ if [ ! -d "$output_dir" ]; then
   mkdir $output_dir
 fi
 
+
+# cat data/samples-spatial-metadata.tsv | sed 1d | grep 
+
 # loop for run spaceranger
-cat data/samples-spatial-metadata.tsv | sed 1d | \
+cat data/samples-spatial-metadata.tsv | sed 1d | grep -P $grep_samples | \
 while read line; do
 
   # create variable needed for spaceranger
