@@ -17,6 +17,9 @@ spatial_transcriptomic_data <- list()
 # add vector of samples 
 spatial_transcriptomic_data$samples <- samples_name
 
+# add information about samples
+spatial_transcriptomic_data$sample_information <- meta_data
+
 # add information about barcode
 spatial_transcriptomic_data$bcs_information <- bcs_merge
 
@@ -25,7 +28,10 @@ spatial_transcriptomic_data$images_information <- images_tibble
 
 # add list with raw data contain:
 # dataframe with metadata for peaks
-spatial_transcriptomic_data$raw_data$metadata <- integrated_analysis@meta.data %>% 
+# spatial_transcriptomic_data$raw_data$metadata <- integrated_analysis@meta.data 
+spatial_transcriptomic_data$raw_data$metadata <- integrated_analysis@meta.data %>% .[, 2:3] %>%
+   rownames_to_column(var = "sample_barcode") %>%
+   separate("sample_barcode", c("sample", "barcode"), sep = "_") %>%
    left_join(., meta_data, by = c("sample" = "sample_ID"))
 
 # dataframe with annotate peaks
@@ -83,11 +89,18 @@ spatial_transcriptomic_data$range_normalize$data <- apply(
 
 colnames(spatial_transcriptomic_data$range_normalize$data) <- colnames(spatial_transcriptomic_data$colfilt_data$data)
 
+spatial_transcriptomic_data$range_normalize$metadata <- spatial_transcriptomic_data$colfilt_data$metadata 
+
+spatial_transcriptomic_data$range_normalize$annotate <- spatial_transcriptomic_data$colfilt_data$annotate
+
 
 
 spatial_transcriptomic_data$seurat$data <- integrated_analysis@assays$RNA@data 
 
 spatial_transcriptomic_data$seurat$annotate <- spatial_transcriptomic_data$raw_data$annotate
+
+spatial_transcriptomic_data$seurat$metadata <- spatial_transcriptomic_data$raw_data$metadata
+
 
 
 
