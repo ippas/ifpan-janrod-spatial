@@ -13,14 +13,8 @@ DimPlot(data_cluster, reduction = "umap",
 DimPlot(data_cluster, reduction = "umap", 
         ncol = 4)
 
-# mypalette <- rep("#555555", 38)
-# names(mypalette) <- as.character(0:37)
-# mypalette["5"] <- "#00FF00"
-# palette_cluster <- mypalette
-
 # visualize clusters
-spatial_cluster(seurat_object = integrated_analysis,
-                spatial_data = spatial_transcriptomic_data,
+spatial_cluster(spatial_data = spatial_transcriptomic_data,
                 resolution = 1,
                 samples = samples_name,
                 palette = palette_cluster, 
@@ -28,63 +22,76 @@ spatial_cluster(seurat_object = integrated_analysis,
                 ncol = 4)
 
 # visualize features 
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_data = "raw_data",
+                  gene = "Junb",
+                  samples = samples_name,
+                  min_percentile = 0.00,
+                  max_percentile = 1,
+                  size = 1,
+                  ncol = 4,
+                  normalization = F)
 
-# spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-#                   type_modification = "raw_data",
-#                   gene = "Junb",
-#                   samples = samples_name,
-#                   min_percentile = 0.00,
-#                   max_percentile = 1,
-#                   size = 1,
-#                   filt_score_int = 0,
-#                   normalization = F) 
 
-
-genetoplot = "Oprm1"
+genetoplot = "Egr1"
 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-                  type_modification = "raw_data",
+                  type_data = "raw_data",
                   gene = genetoplot,
-                  samples = samples_name,
+                  samples = {meta_data %>% filter(mouse_genotype == "tif-mutant" & sample_ID != "S5295Nr2") %>% .[order(.$treatment),] %>%.[,1]},
                   min_percentile = 0.0,
                   max_percentile = 1,
                   size = 1,
                   normalization = T,
                   ncol = 4) 
 
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_data = "range_normalize",
+                  gene = genetoplot,
+                  samples = {meta_data %>% filter(mouse_genotype == "tif-mutant" & sample_ID != "S5295Nr2") %>% .[order(.$treatment),] %>%.[,1]},
+                  min_percentile = 0.0,
+                  max_percentile = 1,
+                  size = 1,
+                  normalization = T,
+                  ncol = 3)
 
 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-                  type_modification = "range_normalize",
+                  type_data = "seurat",
                   gene = genetoplot,
                   samples = samples_name,
                   min_percentile = 0.0,
                   max_percentile = 1,
-                  size = 1,
-                  filt_score_int = 0,
-                  normalization = T)
+                  normalization = T,
+                  ncol = 4)
+
+spatial_gene_plot_cluster(spatial_data = spatial_transcriptomic_data,
+                          type_data = "raw_data",
+                          gene = "Junb",
+                          samples = {meta_data %>% filter(mouse_genotype == "tif-mutant" & sample_ID != "S5295Nr2") %>% .[order(.$treatment),] %>%.[,1]},
+                          min_percentile = 0.0,
+                          max_percentile = 1,
+                          size = 1,
+                          normalization = T,
+                          resolution = 1,
+                          clusters = 0,
+                          ncol = 3) 
 
 
 
-spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
-                  type_modification = "seurat",
-                  gene = genetoplot,
-                  samples = samples_name,
-                  min_percentile = 0.0,
-                  max_percentile = 1,
-                  size = 1,
-                  filt_score_int = 0,
-                  normalization = T)
+spatial_interest_cluster(cluster = 0,
+                         spatial_data = spatial_transcriptomic_data,
+                         resolution = 1,
+                         samples = {meta_data %>% filter(mouse_genotype == "tif-mutant" & sample_ID != "S5295Nr2") %>% .[order(.$treatment),] %>%.[,1]},
+                         size= 1, 
+                         ncol = 3)
 
-# visualize genes using seurat
-spatial_gene_plot_seurat(data = spatial_transcriptomic_data$raw_data$annotate, 
-                         gene = "",
-                         filt_score_int = 0)
+
+
 
 
 
 # old code
-
 data_cluster <- FindClusters(integrated_analysis, resolution = resolution) %>% 
   .$seurat_clusters %>%
   as.data.frame() %>% 
@@ -92,28 +99,3 @@ data_cluster <- FindClusters(integrated_analysis, resolution = resolution) %>%
   rownames_to_column(var = "sample_barcode") %>%
   separate("sample_barcode", c("sample", "barcode"), sep = "_") %>% 
   left_join(., bcs_merge, by = c("barcode", "sample"))
-
-plot_clusters(data_cluster)
-
-colfilt_anno %>%
-  filter(gene_name == "Fos") %>%
-  select(gene_name, peak_id)
-
-
-plot_feature(data_cluster = data_cluster,
-             peak_id = "merged-samples-peak-94135",
-             size = 1)
-
-
-
-
-
-spatial_feature_plot(spatial_data = spatial_transcriptomic_data,
-                     type_modification = "range_normalize",
-                     peak_id = "merged-samples-peak-173070",
-                     samples = samples_name,
-                     min_percentile = 0.05,
-                     max_percentile = 0.99,
-                     size = 1,
-                     normalization = TRUE)
-
