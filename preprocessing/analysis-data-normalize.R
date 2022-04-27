@@ -71,13 +71,27 @@ spatial_transcriptomic_data$colfilt_data$annotate <- spatial_transcriptomic_data
 
 spatial_transcriptomic_data$colfilt_data$data <- spatial_transcriptomic_data$filtered_data$data[, spatial_transcriptomic_data$colfilt_data$col_index]
 
-# add normalize data
-range_normalize <- function(x, range = 500) {
-   wh <- which(x > 1)
+# # add normalize data
+# range_normalize <- function(x, range = 500) {
+#    wh <- which(x > 1)
+#    order <- order(x[wh], decreasing = T)
+#    len <- length(wh)
+#    out <- x
+#    out[wh[order[1:(len - 1)]]] <- (len):2 
+#    out
+# }
+
+range_normalize <- function(x, range = 1000, flatten = 2) {
+   wh <- which(x > flatten)
    order <- order(x[wh], decreasing = T)
-   len <- length(wh)
    out <- x
-   out[wh[order[1:(len - 1)]]] <- (len):2 
+   len <- length(wh)
+   rangecount <- min(range, len)
+   maxrange <- range
+   minrange <- range - rangecount + 2
+   c(rangecount, maxrange, minrange)
+   out[out > flatten] <- flatten
+   out[wh[order[(rangecount - 1)]]] <- maxrange:minrange 
    out
 }
 
@@ -100,6 +114,29 @@ spatial_transcriptomic_data$seurat$data <- integrated_analysis@assays$RNA@data
 spatial_transcriptomic_data$seurat$annotate <- spatial_transcriptomic_data$raw_data$annotate
 
 spatial_transcriptomic_data$seurat$metadata <- spatial_transcriptomic_data$raw_data$metadata
+
+
+spatial_transcriptomic_data$raw_data$metadata %>%
+   .[, c(1, 2, 7, 8, 9)] -> cluster_df
+
+for(resolution in seq(0.1, 2, 0.1)){
+   
+   tmp_column_name <- paste("cluster_resolution", resolution, sep = "_")
+   
+   
+   cluster_df <- FindClusters(integrated_analysis, resolution = resolution) %>%
+      .$seurat_clusters %>%
+      as.data.frame() %>%
+      rename({{tmp_column_name}} := ".") %>%
+      rownames_to_column(var = "sample_barcode") %>%
+      separate("sample_barcode", c("sample", "barcode"), sep = "_") %>%
+      right_join(cluster_df, ., by = c("barcode", "sample"))
+   rm(tmp_column_name)
+   
+}
+
+# add cluser to 
+spatial_transcriptomic_data$clusters <- cluster_df
 
 
 

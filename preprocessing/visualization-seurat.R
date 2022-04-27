@@ -64,12 +64,12 @@ spatial_feature_plot_seurat <- function(..., samples){
 
 
 spatial_feature_plot_seurat(object = integrated_analysis,
-                            features = c("merged-samples-peak-173070"),
+                            features = "merged-samples-peak-75679",
                             samples = samples_name)
 
 
 
-spatial_gene_plot_seurat <- function(data, gene, filt_score_int = 1000){
+spatial_gene_plot_seurat <- function(data, gene){
   # function create plots for all peaks describe to gene
   # gene name gene for which create plots
   # filt_score_int threshold to filter peaks using metrics from MACS3
@@ -77,7 +77,7 @@ spatial_gene_plot_seurat <- function(data, gene, filt_score_int = 1000){
   # find peaks for interest gene, and using filter threshold for peaks
   data %>%
     filter(gene_name == gene) %>%
-    filter(score_int..10.log10pvalue. > filt_score_int) %>%
+    # filter(score_int..10.log10pvalue. > filt_score_int) %>%
     select(peak_id) %>% .[,1] -> vector_peak
   
   # create plot for find peaks
