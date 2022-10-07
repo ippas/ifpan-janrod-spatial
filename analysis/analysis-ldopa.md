@@ -72,7 +72,7 @@ After annotating peaks run `reduction-peaks.R` which is responsible for reductio
 
 Parameters to filtering peaks: (to change)
 - score > 350
-- counts > 
+- counts > 1200
 - summit.log.p > 35
 - amplitude > 400
 - count/amplitude > 1.4
