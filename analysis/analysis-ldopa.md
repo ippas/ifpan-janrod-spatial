@@ -41,13 +41,38 @@ bash preprocessing/prepare-annotate-peaks.sh \
 ```
 
 #### Filter peaks using results from nanopore
+[Repository](https://github.com/ippas/ifpan-janrod-nanopore) in which explain how prepare transcripts for nanopore.
 
-Reduction peaks (for 12 samples - L-DOPA)
+Prepare `bed` file from `csv` contain cDNA from striatum nanopore:
+```
+cat data/str-cdna-peaks.csv | \
+  grep -v MT | \
+  sed '1d ;s/,/\t/g' | \
+  awk 'BEGIN{OFS="\t"}{print "chr"$2, $6-15000, $6+15000, $1, $3}' \
+  > data/str-cdna-nanopore.bed
+```
+
+Using bedttols intersect chose peaks:
+```
+bedtools intersect \
+  -a data/ldopa/gene-annotation/peaks-annotate-sort.bed \
+  -b data/str-cdna-nanopore.bed \
+  -wa -wb | \
+    awk '{print $0, ($16==$22?_:"NOT") "MATCH"}' | \
+    grep -v NOT | \
+    cut -f 1-17 | \
+    sort | \
+    uniq \
+    > data/ldopa/gene-annotation/peaks-annotate-filt-nanopore.bed
+```
+
+
+#### Reduction peaks (for 12 samples - L-DOPA)
 After annotating peaks run `reduction-peaks.R` which is responsible for reduction peaks
 
 Parameters to filtering peaks: (to change)
 - score > 350
-- counts > 800
+- counts > 
 - summit.log.p > 35
 - amplitude > 400
 - count/amplitude > 1.4
