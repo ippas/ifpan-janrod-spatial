@@ -205,27 +205,33 @@ parameter_region_multicore <- function(data, number_core, bam_file, parameter){
 # read data #
 #############
 bam_file <- "data/gene-annotation/merged-samples.bam"
+file_info_peaks <- "data/gene-annotation/peaks-annotate-sort.bed"
+file_info_peaks <- "data/ldopa/gene-annotation/peaks-annotate-filt-nanopore.bed" # for ldopa
+file_info_peaks <- "data/tmp-antypsychotics//gene-annotation/peaks-annotate-filt-nanopore.bed" # for tmp-antypsychotics
+bam_file <- "data/tmp-antypsychotics/gene-annotation/merged-samples.bam" # for tmp-antypsychotics
 
-info_peaks <- read.table("data/gene-annotation/peaks-annotate-sort.bed", 
-                         header = FALSE,
-                         sep = "\t",
-                         col.names = c('chr_peak',
-                                       'start_peak',
-                                       'end_peak',
-                                       'peak_id',
-                                       'score_int(-10*log10pvalue)',
-                                       'strand_coverage',
-                                       'fold_change_peak_summit',
-                                       '-log10pvalue_peak_summit',
-                                       '-log10qvalue_peak_summit',
-                                       'relative_summit_position_peak_start',
-                                       'type_peak',
-                                       'chr_gene',
-                                       'start_gene',
-                                       'end_gene',
-                                       'gene_id',
-                                       'gene_name',
-                                       'strand_gene')) 
+
+
+info_peaks <- read.table(file_info_peaks, 
+                       header = FALSE,
+                       sep = "\t",
+                       col.names = c('chr_peak',
+                                     'start_peak',
+                                     'end_peak',
+                                     'peak_id',
+                                     'score_int(-10*log10pvalue)',
+                                     'strand_coverage',
+                                     'fold_change_peak_summit',
+                                     '-log10pvalue_peak_summit',
+                                     '-log10qvalue_peak_summit',
+                                     'relative_summit_position_peak_start',
+                                     'type_peak',
+                                     'chr_gene',
+                                     'start_gene',
+                                     'end_gene',
+                                     'gene_id',
+                                     'gene_name',
+                                     'strand_gene')) 
 
 
 #############################
@@ -234,59 +240,70 @@ info_peaks <- read.table("data/gene-annotation/peaks-annotate-sort.bed",
 info_peaks %>%
   # calculate distance peaks from gene
   # if peak is inside gene distance = 0
-  mutate(distance = ifelse(strand_gene == "+", 
-                           {ifelse(start_peak < end_gene & start_peak > start_gene, 0, 
-                                   ifelse(start_peak > end_gene, 
-                                          (start_peak - end_gene), 
-                                          (end_peak - start_gene)))},
-                           {ifelse(end_peak < end_gene & end_peak > start_gene, 0,
-                                   ifelse(end_peak < start_gene, 
-                                          (start_gene - end_peak),
-                                          (end_gene - start_peak)))})) %>%
+  mutate(distance = ifelse(strand_gene == "+",
+                           {
+                             ifelse(start_peak < end_gene & start_peak > start_gene,
+                                    0,
+                                    ifelse(
+                                      start_peak > end_gene,
+                                      (start_peak - end_gene),
+                                      (end_peak - start_gene)
+                                    ))
+                           },
+                           {
+                             ifelse(end_peak < end_gene & end_peak > start_gene,
+                                    0,
+                                    ifelse(
+                                      end_peak < start_gene,
+                                      (start_gene - end_peak),
+                                      (end_gene - start_peak)
+                                    ))
+                           })) %>%
   # remove peaks with negative distance to gene
   filter(distance >= 0) %>%
-  group_by(peak_id) %>% 
+  group_by(peak_id) %>%
   nest() %>%
   # calculate min value of distance for peak to describe gene
-  mutate(min_distance = map(data, ~min(.$distance))) %>%
+  mutate(min_distance = map(data, ~ min(.$distance))) %>%
   unnest(min_distance, data) %>%
   as.data.frame() %>%
   # filter peaks which are nearest gene
-  filter(distance == min_distance) %>% 
+  filter(distance == min_distance) %>%
   # calculate abs distance for peaks inner gene
   # if peak is not inner, set value 0
-  mutate(
-    inner_closest = ifelse(strand_gene == "+", 
-                           {ifelse(distance == 0,
-                                   abs(start_peak - end_gene), 0)},
-                           {ifelse(distance == 0,
-                                   abs(start_gene - end_peak),0)}
-    )
-  ) %>%
-  group_by(peak_id) %>% 
+  mutate(inner_closest = ifelse(strand_gene == "+",
+                                {
+                                  ifelse(distance == 0,
+                                         abs(start_peak - end_gene), 0)
+                                },
+                                {
+                                  ifelse(distance == 0,
+                                         abs(start_gene - end_peak), 0)
+                                })) %>%
+  group_by(peak_id) %>%
   nest() %>%
   # calculate min for inner_closest
-  mutate(min_inner_closest = map(data, ~min(.$inner_closest))) %>%
-  unnest(data, min_inner_closest) %>% 
+  mutate(min_inner_closest = map(data, ~ min(.$inner_closest))) %>%
+  unnest(data, min_inner_closest) %>%
   as.data.frame() %>%
   # filter gene which are closest inner peak
-  filter(inner_closest == min_inner_closest) %>% 
-  # reorder columns 
+  filter(inner_closest == min_inner_closest) %>%
+  # reorder columns
   .[, c(2:4, 1, 5:18)] -> info_peaks_closest
 
 
 
 # calculate amplitude for peaks
 parameter_region_multicore(data = info_peaks_closest,
-                          number_core = 16,
-                          bam_file = bam_file,
-                          parameter = "amplitude") -> amplitude_peaks
+                        number_core = 16,
+                        bam_file = bam_file,
+                        parameter = "amplitude") -> amplitude_peaks
 
 # calculate number reads for peak
 parameter_region_multicore(data = info_peaks_closest,
-                          number_core = 16,
-                          bam_file = bam_file,
-                          parameter = "counts") -> peak_counts
+                        number_core = 16,
+                        bam_file = bam_file,
+                        parameter = "counts") -> peak_counts
 
 # add column with amplitude and reads to dataframe
 info_peaks_closest$peak_counts <- unlist(peak_counts)
@@ -294,17 +311,18 @@ info_peaks_closest$peak_counts <- unlist(peak_counts)
 info_peaks_closest$amplitude_peak <- unlist(amplitude_peaks)
 
 # filtering peaks
-info_peaks_closest %>%
-  mutate(
-    ratio_counts_amplitude = .$peak_counts/.$amplitude_peak
-  ) %>%
-  filter(
-    score_int..10.log10pvalue. > 350,
-    peak_counts > 800,
-    X.log10pvalue_peak_summit > 35,
-    amplitude_peak > 400,
-    ratio_counts_amplitude > 1.4
-  ) -> info_peaks_reduction
+info_peaks_closest %>% 
+mutate(
+  ratio_counts_amplitude = .$peak_counts/.$amplitude_peak
+) %>%
+filter(
+  score_int..10.log10pvalue. > 350,
+  # peak_counts > 1200,
+  peak_counts > 800,
+  X.log10pvalue_peak_summit > 35,
+  amplitude_peak > 600,
+  ratio_counts_amplitude > 1.4
+) -> info_peaks_reduction
 
 ###################################
 # collect row to one for + strand #
@@ -312,31 +330,39 @@ info_peaks_closest %>%
 
 # find duplicate peaks
 info_peaks_reduction %>% 
-  group_by(peak_id) %>% 
-  count() %>% filter(n >1) %>% as.data.frame() %>%
-  .[, 1] -> duplicate_peak
+group_by(peak_id) %>% 
+count() %>% filter(n >1) %>% as.data.frame() %>%
+.[, 1] -> duplicate_peak
 
 # vector of column to group_by for plus strand
 column_names <- info_peaks_reduction %>% 
-  colnames() %>%
-  .[!. %in% c("start_gene", "gene_id", "gene_name")] 
+colnames() %>%
+.[!. %in% c("start_gene", "end_gene", "gene_id", "gene_name")] 
 
 # collect many row to one for plus strand, 
 # for minus strand not detect duplicate peak_id
-info_peaks_reduction %>% 
+info_peaks_reduction %>% unique() %>% 
   group_by(across(all_of(column_names))) %>%
   summarise(start_gene = str_c(start_gene, collapse = ", "),
+            end_gene = str_c(end_gene, collapse = ", "),
             gene_id = str_c(gene_id, collapse = ", "),
-            gene_name = str_c(gene_name, collapse = ", ")) %>%
+            gene_name = str_c(gene_name, collapse = ", ")) %>% 
   as.data.frame() %>% 
-  .[, c(1:12, 19, 13,20, 21, 14:18)] %>%
-  # save to file
+  .[, c(1:12, 18, 19, 20, 21, 13, 14:17)] %>% 
+  # save to file,
   write.table(., 
-              file='data/gene-annotation/peaks-annotate-reduction.tsv', 
+              file='data/tmp-antypsychotics//gene-annotation/peaks-annotate-reduction.tsv', 
               quote=FALSE, 
               sep='\t', 
               col.names = TRUE, 
               row.names = FALSE)
+  # write.table(., 
+  #             file='data/ldopa/gene-annotation/peaks-annotate-reduction.tsv', 
+  #             quote=FALSE, 
+  #             sep='\t', 
+  #             col.names = TRUE, 
+  #             row.names = FALSE)
+
 
 ###################################################
 # Visualization interest peaks - check filtration #

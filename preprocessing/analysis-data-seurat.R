@@ -48,6 +48,7 @@ require(doSNOW)
 require(tidyr)
 require(tibble)
 require(gridExtra)
+require(parallel)
 
 
 
@@ -55,6 +56,8 @@ require(gridExtra)
 # Require source files
 # get list of sample
 samples_name <- list.files(path = "data/ldopa/spaceranger-corrected/")
+
+
 
 samples_name
 

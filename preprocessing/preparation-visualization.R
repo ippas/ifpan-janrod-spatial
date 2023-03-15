@@ -8,7 +8,7 @@ resolution = 1
 data_cluster <- FindClusters(integrated_analysis, resolution = resolution)
 
 DimPlot(data_cluster, reduction = "umap", 
-        split.by = "sample", ncol = 4)
+        split.by = "sample", ncol = 3)
 
 DimPlot(data_cluster, reduction = "umap", 
         ncol = 4)
@@ -17,20 +17,20 @@ DimPlot(data_cluster, reduction = "umap",
 spatial_cluster(spatial_data = spatial_transcriptomic_data,
                 resolution = 1,
                 samples = samples_name,
-                palette = palette_cluster, 
-                size= 1, 
-                ncol = 4)
+                palette = palette_allen, 
+                size= 1.2, 
+                ncol = 3)
 
 # visualize features 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
                   type_data = "raw_data",
-                  gene = "Junb",
+                  gene = "Camk4",
                   samples = samples_name,
                   min_percentile = 0.00,
                   max_percentile = 1,
                   size = 1,
-                  ncol = 4,
-                  normalization = F)
+                  ncol = 3,
+                  normalization = T)
 
 
 genetoplot = "Egr1"
@@ -42,8 +42,10 @@ spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
                   min_percentile = 0.0,
                   max_percentile = 1,
                   size = 1,
+                  tif_image = T,
                   normalization = T,
-                  ncol = 4) 
+                  alpha = 1,
+                  ncol = 3) 
 
 spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
                   type_data = "range_normalize",
@@ -86,16 +88,30 @@ spatial_interest_cluster(cluster = 0,
                          size= 1, 
                          ncol = 3)
 
+tmp <- FindMarkers(data_cluster, ident.1 = 4, min.pct = 0.25)
+
+tmp %>% rownames_to_column(., "peak_id") %>%
+  left_join(., {mutate(info_peaks, peak_id = str_replace_all(peak_id, "_", "-")) %>%
+      select(peak_id, gene_name)}, by = "peak_id") %>% head(20)
+
+
+  
+  info_peaks %>% 
+  mutate(info_peaks, peak_id = str_replace_all(peak_id, "_", "-")) %>%
+  select(peak_id, gene_name) %>% 
+  filter(peak_id == "merged-samples-peak-199960")
+
+  
+
+spatial_gene_plot(spatial_data = spatial_transcriptomic_data,
+                  type_data = "raw_data",
+                  gene = "Cck",
+                  samples = samples_name[c(1,5)],
+                  min_percentile = 0.00,
+                  max_percentile = 1,
+                  size = 1.6,
+                  ncol = 2,
+                  normalization = T)
 
 
 
-
-
-# old code
-data_cluster <- FindClusters(integrated_analysis, resolution = resolution) %>% 
-  .$seurat_clusters %>%
-  as.data.frame() %>% 
-  rename(cluster = ".") %>% 
-  rownames_to_column(var = "sample_barcode") %>%
-  separate("sample_barcode", c("sample", "barcode"), sep = "_") %>% 
-  left_join(., bcs_merge, by = c("barcode", "sample"))

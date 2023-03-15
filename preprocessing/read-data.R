@@ -11,24 +11,7 @@ meta_data <- read.table("data/samples-spatial-metadata.tsv",
 info_peaks <- read.table("data/ldopa/gene-annotation/peaks-annotate-reduction.tsv", 
                          header = TRUE,
                          sep = "\t")
-                         # col.names = c('chr_peak',
-                         #               'start_peak',
-                         #               'end_peak',
-                         #               'peak_id',
-                         #               'score_int(-10*log10pvalue)',
-                         #               'strand_coverage',
-                         #               'fold_change_peak_summit',
-                         #               '-log10pvalue_peak_summit',
-                         #               '-log10qvalue_peak_summit',
-                         #               'relative_summit_position_peak_start',
-                         #               'type_peak',
-                         #               'chr_gene',
-                         #               'start_gene',
-                         #               'end_gene',
-                         #               'gene_id',
-                         #               'gene_name',
-                         #               'strand_gene')) 
-                         # 
+ 
 
 ###############
 # read images #
@@ -87,3 +70,4 @@ lapply(samples_name,
 ) %>% 
   setNames(samples_name) %>% 
   bind_rows(., .id = "sample") -> bcs_merge
+

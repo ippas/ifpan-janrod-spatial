@@ -40,14 +40,14 @@ fi
 # cat data/samples-spatial-metadata.tsv | sed 1d | grep 
 
 # loop for run spaceranger
-cat data/samples-spatial-metadata.tsv | sed 1d | grep -P $grep_samples | \
+cat data/antypsychotics/samples-spatial-metadata.tsv | sed 1d | grep -P $grep_samples | \
 while read line; do
 
   # create variable needed for spaceranger
   sample=$(echo $line | awk '{print $1}')
   slide=$(echo $line | awk '{print $2}')
   area=$(echo $line | awk '{print $3}')
-  tif_file=(raw/tif/$sample.tif)
+  tif_file=(raw/tif/$sample"-"$slide"-"$area.tif)
   json_file=(raw/json/$sample"-"$slide"-"$area.json)
   localcores=16
 
