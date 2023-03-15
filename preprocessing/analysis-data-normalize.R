@@ -81,7 +81,7 @@ spatial_transcriptomic_data$colfilt_data$data <- spatial_transcriptomic_data$fil
 #    out
 # }
 
-range_normalize <- function(x, range = 1000, flatten = 2) {
+range_normalize <- function(x, range = 1500, flatten = 1) {
    wh <- which(x > flatten)
    order <- order(x[wh], decreasing = T)
    out <- x
