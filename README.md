@@ -71,6 +71,20 @@ Prepare `mart-export-v102-mm10.bed` file [download from](http://nov2020.archive.
  - gene stable ID
  - gene name
  - strand
+ 
+
+### Prepare data from nanopore
+The [repository](https://github.com/ippas/ifpan-janrod-nanopore) provides information on how was prepared transcripts for nanopore sequencing.
+
+A `bed` file was  prepared from a `csv` file containing transcirpts find in striatum by nanopore sequencing experiment using command:
+```
+cat data/str-cdna-peaks.csv | 
+  grep -v MT | \
+  sed '1d ;s/,/\t/g' | \
+  awk 'BEGIN{OFS="\t"}{print "chr"$2, $6-15000, $6+15000, $1, $3}' \
+  > data/str-cdna-nanopore.bed
+```
+
 
 ### Analysis spaceranger count
 
