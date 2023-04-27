@@ -17,6 +17,8 @@ Script arguments:
 - -\-transcriptome - indicate folder with reference of transcriptome
 - -\-output-dir - indicate output dir of results
 - -\-samples - indicate for samples execute spaceranger count analysis. Set many samples using comma separated
+- -\-metadata - flag is used to provide a metadata TSV file for the analysis
+- -\-localcores - flag is used to specify the number of CPU cores to be allocated for parallel processing during the analysis.
 
 ##### [prepare-annotate-peaks.sh](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/prepare-annotate-peaks.sh) 
 The script contains commands which prepare a file with annotated peaks:
@@ -31,17 +33,17 @@ The script contains commands which prepare a file with annotated peaks:
 These steps are aimed at preparing a file containing information about peaks that a peak belongs to gene or ltr, information to the nearest gene, and also information about a strand of a peak, therefore, coverage was counted for each peak.
 
 Script arguments:
-  - -\-gene-bed - file contain infromation about gene
-  - -\-ltr-bed - file contain information about ltr
-  - -\-macs-dir - indicate path to results from MACS3
-  - -\-data-dir	- indicate where are needed files and output dir for `peaks-annotate-sort.bed`
-  - -\-number-threads - number of threads to use 
+  - -\-gene-bed - Path to the gene BED file
+  - -\-ltr-bed - Path to the LTR BED file
+  - -\-macs-dir - Path to the peaks file obtained by MACS3
+  - -\-data-dir	- Path to the data directory
+  - -\-number-threads - Number of threads to use (default: 1)
 
 ##### [bed2gtf-spaceranger.py](https://github.com/ippas/ifpan-janrod-spatial/blob/master/preprocessing/bed2gtf-spaceranger.py)
 The script convert `bed` to `gtf` file.
 
 Script arguments:
-  -  -\-input - input file
+  - -\-input - input file
   - -\-output - output file 
 
 ## Analysis
@@ -97,6 +99,8 @@ bash preprocessing/spaceranger-analysis.sh \
 ```
 
 ### [Analysis ldopa](https://github.com/ippas/ifpan-janrod-spatial/blob/master/analysis/analysis-ldopa.md)
+
+### [Analysis risperidone](https://github.com/ippas/ifpan-janrod-spatial/blob/master/analysis/analysis-risperidone.md)
 
 
 
