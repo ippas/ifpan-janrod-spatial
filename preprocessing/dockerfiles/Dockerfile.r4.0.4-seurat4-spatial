@@ -1,0 +1,31 @@
+# Use an R-based Docker image
+FROM rocker/rstudio:4.0.3
+
+# Install necessary system libraries
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libhdf5-dev \
+    libglpk40 \
+    libxt-dev
+
+# Install CRAN packages
+RUN R -e "install.packages(c('ggplot2', 'Matrix', 'rjson', 'cowplot', 'RColorBrewer', 'Seurat', 'grid', 'readbitmap', 'dplyr', 'data.table', 'doSNOW', 'hdf5r', 'remotes', 'tidyr', 'tibble', 'gridExtra', 'parallel', 'preprocessCore', 'enrichR', 'gplots', 'e1071', 'psych', 'DT', 'shinydashboard'), repos='http://cran.rstudio.com/')"
+
+# Install Bioconductor manager
+RUN R -e "if (!requireNamespace('BiocManager', quietly = TRUE)) install.packages('BiocManager')"
+
+# Install Bioconductor packages
+RUN R -e "BiocManager::install(c('rhdf5', 'DESeq2', 'edgeR'))"
+
+# Create .Rprofile to load packages at start of R session
+RUN echo 'library(ggplot2); library(Matrix); library(rjson); library(cowplot); library(RColorBrewer); library(Seurat); library(grid); library(readbitmap); library(dplyr); library(data.table); library(doSNOW); library(hdf5r); library(remotes); library(tidyr); library(tibble); library(gridExtra); library(parallel); library(preprocessCore); library(enrichR); library(gplots); library(e1071); library(psych); library(DT); library(shinydashboard); library(rhdf5); library(DESeq2); library(edgeR);' > /root/.Rprofile
+
+# Expose port for RStudio
+EXPOSE 8787
+
+# Set the default command to R prompt
+CMD ["/init"]
