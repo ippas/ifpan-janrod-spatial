@@ -2,7 +2,6 @@
 
 # initialize the variable with the default value
 localcores=$(nproc)
-json_sufix=""
 
 # assigning arguments from flags to varibles
 while test $# -gt 0; do
@@ -27,11 +26,6 @@ while test $# -gt 0; do
                 samples=$1
                 shift
                 ;;
-            --json-sufix)
-                shift
-                json_sufix=$1
-                shift
-                ;;
             --localcores)
                 shift
                 localcores=$1
@@ -44,13 +38,8 @@ while test $# -gt 0; do
     esac
 done  
 
-# if json_sufix is not empty add .json to json_sufix
-if [ ! -z "$json_sufix" ]; then
-  json_sufix="-$json_sufix"
-fi
-
 # create variable to grep many samples by grep
-grep_samples=$(echo $samples | sed 's/,/\\t|/g; s/^/"|/; s/$/\\t|"/')
+grep_samples=$(echo $samples | sed 's/,/\|/g; s/^/"|/; s/$/|"/')
 
 # output_dir="data/spaceranger/"
 
@@ -72,7 +61,6 @@ while read line; do
   slide=$(echo $line | awk '{print $2}')
   area=$(echo $line | awk '{print $3}')
   tif_file=(raw/$sample/*.tif)
-  json_file=(raw/$sample/$sample-$slide-$area$json_sufix.json)
   json_file=(raw/$sample/*.json)
 
 
