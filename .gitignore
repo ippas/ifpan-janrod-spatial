@@ -3,6 +3,7 @@
 /results
 /tools
 /preprocessing/tmp
+/tmp
 
 ########## R.gitignore ##########
 
