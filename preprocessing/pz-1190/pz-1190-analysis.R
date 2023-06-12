@@ -104,16 +104,6 @@ spatial_gene_plot(spatial_data = pz1190_st_data_half,
                   size = 0.8,
                   ncol = 4,
                   normalization = T)
-#
-
-stat_raw_pz1190_half %>%
-  as.data.frame()  %>%
-  rownames_to_column(., var = "peak_id") %>%
-  left_join(., pz1190_st_data_half$raw_data$annotate[, c("gene_name", "peak_id")], by = "peak_id") %>%
-  relocate(., gene_name, .after = peak_id) %>% 
-  gather(., key = "cluster", "p_value", -gene_name, -peak_id) %>% 
-  filter(p_value < 0.05) %>% select(gene_name) %>% table %>% as.data.frame() 
-
 
 # statistics pz1190
 summarize_and_test(spatial_data = pz1190_st_data_half,
@@ -136,6 +126,6 @@ summarize_and_test(spatial_data = pz1190_st_data_half,
                    mean_threshold = 0,
                    metrics = c("mean", "median")) -> tmp
 
-tmp$quantile_metric$resolution_0.1$cluster_0
+
 
 

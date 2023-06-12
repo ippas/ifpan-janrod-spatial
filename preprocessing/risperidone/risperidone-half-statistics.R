@@ -53,80 +53,38 @@ summarize_and_test(spatial_data = risperidone_st_data_half,
                    control_samples = samples_saline,
                    experiment_samples = samples_risperidone,
                    mean_threshold = 0,
-                   metrics = c("mean", "median")) -> risperidone_summary_statistics
+                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics
+
+
+# compute_data_summary(spatial_data = risperidone_st_data_half,
+#                      resolution = 0.8,
+#                      trim = 0.05,
+#                      num_cores = 24,
+#                      control_samples = samples_saline,
+#                      experiment_samples = samples_risperidone,
+#                      data_type = "raw_data",
+#                      min_number_spots = 20,
+#                      metrics = c("expression_spot", "mean")) -> quantile_summary_data_0.8
+
+
+# perform_statistical_tests(spatial_data = risperidone_st_data_half,
+#                           summary_data = quantile_summary_data_0.8,
+#                           metric = "mean",
+#                           resolution = 0.8,
+#                           num_cores = 24,
+#                           mean_threshold = 0.2,
+#                           control_samples = samples_saline,
+#                           experiment_samples = samples_risperidone,
+#                           quantile_normalization = T) -> tmp
+
+# filter_data_statistics(summary_data = get(tmp), 
+#                        data_type = "range_normalize", 
+#                        resolution = 0.1,
+#                        metric = "mean",
+#                        control_mean_threshold = 0.5,
+#                        experiment_mean_threshold = 0.5,
+#                        log2ratio_threshold = 0.5,
+#                        t_test_threshold = 0.05)
 
 
 
-summarize_and_test(spatial_data = risperidone_st_data_half,
-                   trim = 0.05, 
-                   num_cores = 24,
-                   data_params_df = data_params_df,
-                   control_samples = samples_saline,
-                   experiment_samples = samples_risperidone[-3],
-                   mean_threshold = 0,
-                   metrics = c("mean", "median")) -> risperidone_summary_statistics_remove_ris
-
-##################3
-
-compute_data_summary(spatial_data = risperidone_st_data_half,
-                     resolution = 0.8,
-                     trim = 0.05,
-                     num_cores = 24,
-                     control_samples = samples_saline,
-                     experiment_samples = samples_risperidone,
-                     data_type = "raw_data",
-                     metrics = c("expression_spot", "mean")) -> quantile_summary_data_0.8
-
-quantile_summary_data_0.8$cluster_20$experiment$mean
-
-# 
- 
-perform_statistical_tests(spatial_data = risperidone_st_data_half,
-                          summary_data = quantile_summary_data,
-                          metric = "mean",
-                          resolution = resolution,
-                          num_cores = 24,
-                          mean_threshold = 0.2,
-                          quantile_normalization = T) -> quantile_summary_data_0.8
-
-
-tmp <-"risperidone_summary_statistics"
-tmp <- "risperidone_summary_statistics_remove_ris"
-
-filter_data_statistics(summary_data = get(tmp), 
-                       data_type = "range_normalize", 
-                       resolution = 0.1,
-                       metric = "mean",
-                       control_mean_threshold = 0.5,
-                       experiment_mean_threshold = 0.5,
-                       log2ratio_threshold = 0.5,
-                       t_test_threshold = 0.05)
-
-
-
-
-summary_filter_statistics(data = risperidone_filter_statistics)
-
-
-risperidone_summary_statistics$raw_data$resolution_0.1$cluster_0$control$mean[2,]
-
-
-
-
-spatial_interest_cluster(cluster = 5,
-                         # seurat_object = integrated_analysis,
-                         spatial_data = risperidone_st_data_half,
-                         resolution = 0.4,
-                         samples = c(samples_saline, samples_risperidone),
-                         size= 1,
-                         ncol = 4)
-
-spatial_gene_plot(spatial_data = risperidone_st_data_half,
-                  type_data = "quantile_normalize",
-                  gene = "Homer1",
-                  samples =  c(samples_saline[-1], samples_risperidone[-3]),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 0.8,
-                  ncol = 5,
-                  normalization = T) 

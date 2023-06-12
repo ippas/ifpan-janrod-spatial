@@ -1,34 +1,56 @@
-######################################
-# Install and require needed packages #
-######################################
-# List of packages to install
-packages <- c("ggplot2", "Matrix", "rjson", "cowplot", "RColorBrewer", "Seurat", 
-              "grid", "readbitmap", "dplyr", "data.table", "doSNOW", "hdf5r",
-              "remotes", "BiocManager", "tidyr", "tibble", "gridExtra", "parallel")
+# Function to install and load packages
+install_and_load <- function(package_name, bioc = FALSE, github = FALSE) {
+  if (!is.element(package_name, installed.packages()[,1])) {
+    if (bioc) {
+      if (!requireNamespace("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+      BiocManager::install(package_name)
+    } else if (github) {
+      if (!requireNamespace("remotes", quietly = TRUE))
+        install.packages("remotes")
+      remotes::install_github(package_name)
+    } else {
+      install.packages(package_name)
+    }
+  }
+  require(package_name, character.only = TRUE)
+}
 
-# Install packages if not already installed
-for (pkg in packages) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg)
+# List of CRAN packages
+cran_packages <- c("ggplot2", "Matrix", "rjson", "cowplot", "RColorBrewer", "Seurat", 
+                   "grid", "readbitmap", "dplyr", "data.table", "doSNOW", "hdf5r",
+                   "remotes", "BiocManager", "tidyr", "tibble", "gridExtra", "parallel", 
+                   "preprocessCore", "enrichR", "gplots", "e1071", "psych", "DT", "shinydashboard")
+
+# List of Bioconductor packages
+bioc_packages <- c("rhdf5", "DESeq2", "edgeR")
+
+# List of GitHub packages
+github_packages <- c("satijalab/seurat-data")
+
+# Install and load CRAN packages
+for (package in cran_packages) {
+  install_and_load(package)
+}
+
+# Install and load Bioconductor packages
+for (package in bioc_packages) {
+  install_and_load(package, bioc = TRUE)
+}
+
+# # Install and load GitHub packages
+# for (package in github_packages) {
+#   install_and_load(package, github = TRUE)
+# }
+
+# Load additional packages if necessary
+# additional_packages <- c("SeuratData", "patchwork", "pbapply", "stringr")
+additional_packages <- c("patchwork", "pbapply", "stringr")
+for (package in additional_packages) {
+  if (!require(package, character.only = TRUE)) {
+    stop(paste("Package", package, "not found."))
   }
 }
-
-# Install specific versions and repositories
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
-BiocManager::install(version = "3.11")
-BiocManager::install("rhdf5")
-
-# Install from GitHub
-if (!requireNamespace("SeuratData", quietly = TRUE)) {
-  require(remotes)
-  remotes::install_github("satijalab/seurat-data")
-}
-
-# Load required packages
-required_packages <- c("SeuratData", "patchwork", "pbapply", "stringr", "tidyr", "tibble", packages)
-lapply(required_packages, require, character.only = TRUE)
 
 ##########################################################
 # functions to spatial transcriptomics analysis - seurat #

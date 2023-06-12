@@ -1,6 +1,8 @@
 # read function
 source("preprocessing/functions/functions-spatial-data.R")
-
+source("preprocessing/functions/statistics-functions.R")
+source("preprocessing/functions/visualization-functions.R")
+source("preprocessing/functions/umi-per-spot.R")
 
 # executes seurat analysis for risperidone
 path_to_data <- "data/risperidone/spaceranger-corrected-half/"
@@ -13,6 +15,15 @@ sample_names <- list.files(path = path_to_data)
 # read metadata for risperidone
 metadata_risperidone <- read_metadata(file_path = "data/metadata-antipsychotics.tsv", 
                                       treatments = c("saline", "risperidone"))
+
+# visualization test
+samples_saline <- metadata_risperidone %>% 
+  filter(treatment == "saline" & mouse_genotype == "wt") %>%
+  .[, 1]
+
+samples_risperidone <- metadata_risperidone %>% 
+  filter(treatment == "risperidone" & mouse_genotype == "wt") %>%
+  .[, 1]
 
 # read peaks for risperidone
 info_peaks_risperidone <- read_gene_annotation(file_path = "data/risperidone/gene-annotation/peaks-annotate-reduction.tsv")
@@ -66,21 +77,6 @@ risperidone_st_data_half <- evaluate_clustering_stability(spatial_data = risperi
                                                      resolution_step = 0.05)
 
 
-risperidone_st_data_half <-
-  add_quantile_norm_data(
-    spatial_data = risperidone_st_data_half,
-    resolution = 0.1,
-    num_cores = 24,
-    data_type = "raw_data"
-  )
-
-risperidone_st_data_half <-
-  add_quantile_norm_data(
-    spatial_data = risperidone_st_data_half,
-    resolution = 0.4,
-    num_cores = 24,
-    data_type = "raw_data"
-  )
 
 
 for(resolution in c(0.05, 0.1, 0.15, 0.2, 0.4, 0.8)){
@@ -98,91 +94,122 @@ risperidone_st_data_half$stability_results %>%
   ggplot(aes(x = resolution, y = silhouette_score)) +
   geom_line()
 
-# visualization test
-samples_saline <- metadata_risperidone %>% 
-  filter(treatment == "saline" & mouse_genotype == "wt") %>%
-  .[, 1]
-
-samples_risperidone <- metadata_risperidone %>% 
-  filter(treatment == "risperidone" & mouse_genotype == "wt") %>%
-  .[, 1]
 
 
-resolution = 0.5
+data.frame(data_type = c(
+  rep("raw_data", 3),
+  rep("range_normalize", 3),
+  c(
+    "quantile_normalize_resolution_0.1",
+    "quantile_normalize_resolution_0.4",
+    "quantile_normalize_resolution_0.8"
+  )
+),
+resolution = rep(c(0.1, 0.4, 0.8), 3),
+data_type_name = c(
+  rep("raw_data", 3),
+  rep("range_normalize", 3),
+  rep("quantile_normalize", 3)
+)) -> data_params_df
 
-DimPlot(risperidone_integrate, reduction = "umap", 
-        split.by = "sample", ncol = 4)
 
-DimPlot(risperidone_integrate, reduction = "umap", 
-        ncol = 4)
+data.frame(data_type = c(
+  rep("raw_data", 6),
+  rep("raw_data", 6),
+  rep("range_normalize", 6),
+  rep("seurat", 6),
+  c(
+    "quantile_normalize_resolution_0.05",
+    "quantile_normalize_resolution_0.1",
+    "quantile_normalize_resolution_0.15",
+    "quantile_normalize_resolution_0.2",
+    "quantile_normalize_resolution_0.4",
+    "quantile_normalize_resolution_0.8"
+  )
+),
+resolution = rep(c(0.05, 0.1, 0.15, 0.2, 0.4, 0.8), 5),
+data_type_name = c(
+  rep("raw_data", 6),
+  rep("quantile_metric", 6),
+  rep("range_normalize", 6),
+  rep("seurat", 6),
+  rep("quantile_normalize", 6)
+)) %>%
+  mutate(quantile_normalization = ifelse(data_type_name == "quantile_metric", TRUE, FALSE)) -> data_params_df
 
+
+summarize_and_test(spatial_data = risperidone_st_data_half,
+                   trim = 0.05, 
+                   num_cores = 24,
+                   data_params_df = data_params_df,
+                   control_samples = samples_saline,
+                   experiment_samples = samples_risperidone,
+                   mean_threshold = 0,
+                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics_half
+
+save(samples_saline,
+     samples_risperidone,
+     risperidone_integrate_half,
+     risperidone_st_data_half,
+     risperidone_summary_statistics_half, 
+     file = "results/risperidone/risperidone.RData")
+
+
+
+# DimPlot(risperidone_integrate, reduction = "umap", 
+#         split.by = "sample", ncol = 4)
+# 
+# DimPlot(risperidone_integrate, reduction = "umap", 
+#         ncol = 4)
+# 
 # visualize clusters
-spatial_cluster(spatial_data = risperidone_st_data_half,
-                resolution = 0.8,
-                samples = c(samples_saline, samples_risperidone),
-                palette = palette_allen, 
-                size= 1.0, 
-                ncol = 4)
-
-spatial_interest_cluster(cluster = 3,
-                         # seurat_object = integrated_analysis,
-                         spatial_data = risperidone_st_data_half,
-                         resolution = 0.8,
-                         samples = c(samples_saline, samples_risperidone),
-                         size= 1,
-                         ncol = 4)
-
-
-spatial_gene_plot(spatial_data = risperidone_st_data_half,
-                  type_data = "quantile_normalize",
-                  gene = "Itpk1",
-                  samples =  c(samples_saline, samples_risperidone),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 0.8,
-                  ncol = 4,
-                  normalization = T)
-
-spatial_gene_plot(spatial_data = risperidone_st_data_half,
-                  type_data = "raw_data",
-                  gene = "Egr4",
-                  samples =  c(samples_saline, samples_risperidone),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 0.8,
-                  ncol = 4,
-                  normalization = T)
-
-ncol <- 3
-spatial_feature_plot(spatial_data = risperidone_st_data_half,
-                  type_data = "quantile_normalize",
-                  peak_id = "risperidone-peak-166641",
-                  samples =  c(samples_saline, samples_risperidone),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  # size = 0.8,
-                  # ncol = 3,
-                  normalization = T)
+# spatial_cluster(spatial_data = risperidone_st_data_half,
+#                 resolution = 0.8,
+#                 samples = c(samples_saline, samples_risperidone),
+#                 palette = palette_allen, 
+#                 size= 1.0, 
+#                 ncol = 4)
+# 
+# spatial_interest_cluster(cluster = 3,
+#                          # seurat_object = integrated_analysis,
+#                          spatial_data = risperidone_st_data_half,
+#                          resolution = 0.8,
+#                          samples = c(samples_saline, samples_risperidone),
+#                          size= 1,
+#                          ncol = 4)
+# 
+# 
+# spatial_gene_plot(spatial_data = risperidone_st_data_half,
+#                   type_data = "quantile_normalize",
+#                   gene = "Itpk1",
+#                   samples =  c(samples_saline, samples_risperidone),
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 0.8,
+#                   ncol = 4,
+#                   normalization = T)
+# 
+# spatial_gene_plot(spatial_data = risperidone_st_data_half,
+#                   type_data = "raw_data",
+#                   gene = "Egr4",
+#                   samples =  c(samples_saline, samples_risperidone),
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 0.8,
+#                   ncol = 4,
+#                   normalization = T)
 
 
-calculate_gene_expression_stats(spatial_data = risperidone_st_data,
-                                stat_test = "t.test",
-                                data_type = "raw_data",
-                                expression_unit = "sample",
-                                control_samples = samples_saline,
-                                experiment_samples = samples_risperidone,
-                                save_results = F
-) -> stat_raw_risperidone_half
+# calculate_gene_expression_stats(spatial_data = risperidone_st_data,
+#                                 stat_test = "t.test",
+#                                 data_type = "raw_data",
+#                                 expression_unit = "sample",
+#                                 control_samples = samples_saline,
+#                                 experiment_samples = samples_risperidone,
+#                                 save_results = F
+# ) -> stat_raw_risperidone_half
 
 
-
-stat_raw_risperidone_half %>%
-  as.data.frame()  %>%
-  rownames_to_column(., var = "peak_id") %>%
-  left_join(., risperidone_st_data_half$raw_data$annotate[, c("gene_name", "peak_id")], by = "peak_id") %>%
-  relocate(., gene_name, .after = peak_id) %>% 
-  gather(., key = "cluster", "p_value", -gene_name, -peak_id) %>% 
-  filter(p_value < 0.05) %>% select(gene_name) %>% table %>% as.data.frame() 
 
 genes2mind_ris <- c(
   "Rps13",
