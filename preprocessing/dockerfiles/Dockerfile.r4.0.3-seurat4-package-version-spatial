@@ -1,0 +1,175 @@
+# Use an R-based Docker image
+FROM rocker/rstudio:4.0.3
+#FROM rocker/shiny:4.0.3
+
+# Install necessary system libraries
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libhdf5-dev \
+    libglpk40 \
+    libxt-dev \
+    libtiff-dev
+
+# Define a vector of packages to install and their versions
+RUN R -e "\
+  packages <- c(\
+    'DT=0.28',\
+    'GenomicRanges=1.42.0',\
+    'IRanges=2.24.1',\
+    'KernSmooth=2.23-17',\
+    'MASS=7.3-53',\
+    'Matrix=1.2-18',\
+    'Matrix=1.5-4.1',\
+    'MatrixGenerics=1.2.1',\
+    'R6=2.5.1',\
+    'RANN=2.6.1',\
+    'RColorBrewer=1.1-3',\
+    'RCurl=1.98-1.2',\
+    'ROCR=1.0-11',\
+    'RSQLite=2.2.3',\
+    'Rcpp=1.0.10',\
+    'RcppAnnoy=0.0.20',\
+    'RcppArmadillo=0.12.4.0.0',\
+    'RcppEigen=0.3.3.9.3',\
+    'RcppProgress=0.4.2',\
+    'RcppTOML=0.2.2',\
+    'Rhdf5lib=1.12.1',\
+    'Rtsne=0.16',\
+    'Seurat=4.3.0',\
+    'SeuratData=0.2.2',\
+    'SeuratObject=4.1.3',\
+    'bit64=4.0.5',\
+    'bmp=0.3',\
+    'caTools=1.18.2',\
+    'class=7.3-17',\
+    'cli=3.6.1',\
+    'cluster=2.1.0',\
+    'codetools=0.2-16',\
+    'cowplot=1.1.1',\
+    'cpp11=0.4.3',\
+    'crayon=1.5.2',\
+    'crosstalk=1.2.0',\
+    'data.table=1.14.8',\
+    'digest=0.6.31',\
+    'doSNOW=1.0.20',\
+    'dplyr=1.1.2',\
+    'e1071=1.7-13',\
+    'edgeR=3.32.1',\
+    'ellipsis=0.3.2',\
+    'enrichR=3.2',\
+    'fansi=1.0.4',\
+    'fitdistrplus=1.1-11',\
+    'foreach=1.5.2',\
+    'formatR=1.7',\
+    'future=1.32.0',\
+    'future.apply=1.11.0',\
+    'generics=0.1.3',\
+    'ggplot2=3.4.2',\
+    'ggrepel=0.9.3',\
+    'ggridges=0.5.4',\
+    'glue=1.6.2',\
+    'gplots=3.1.3',\
+    'grDevices=4.0.3',\
+    'graphics=4.0.3',\
+    'grid=4.0.3',\
+    'gridExtra=2.3',\
+    'gtable=0.3.3',\
+    'gtools=3.9.4',\
+    'hdf5r=1.3.8',\
+    'htmltools=0.5.5',\
+    'htmlwidgets=1.6.2',\
+    'httr=1.4.6',\
+    'ica=1.0-3',\
+    'igraph=1.4.3',\
+    'irlba=2.3.5.1',\
+    'isoband=0.2.7',\
+    'iterators=1.0.14',\
+    'jpeg=0.1-10',\
+    'jsonlite=1.8.4',\
+    'lattice=0.20-41',\
+    'leiden=0.4.3',\
+    'lifecycle=1.0.3',\
+    'lmtest=0.9-40',\
+    'magrittr=2.0.3',\
+    'matrixStats=1.0.0',\
+    'methods=4.0.3',\
+    'mgcv=1.8-33',\
+    'miniUI=0.1.1.1',\
+    'mnormt=2.1.1',\
+    'nlme=3.1-149',\
+    'parallel=4.0.3',\
+    'parallelly=1.36.0',\
+    'patchwork=1.1.2',\
+    'pbapply=1.7-0',\
+    'pillar=1.9.0',\
+    'pkgconfig=2.0.3',\
+    'plotly=4.10.1',\
+    'png=0.1-8',\
+    'polyclip=1.10-4',\
+    'promises=1.2.0.1',\
+    'psych=2.3.3',\
+    'purrr=1.0.1',\
+    'readbitmap=0.1.5',\
+    'remotes=2.4.2',\
+    'reticulate=1.28',\
+    'rjson=0.2.21',\
+    'rlang=1.1.1',\
+    'scales=1.2.1',\
+    'scattermore=1.1',\
+    'sctransform=0.3.5',\
+    'snow=0.4-4',\
+    'sourcetools=0.1.7-1',\
+    'spatstat.data=3.0-1',\
+    'spatstat.explore=3.2-1',\
+    'spatstat.geom=3.2-1',\
+    'spatstat.random=3.1-5',\
+    'spatstat.sparse=3.0-1',\
+    'spatstat.utils=3.0-3',\
+    'stats=4.0.3',\
+    'stats4=4.0.3',\
+    'stringi=1.7.12',\
+    'stringr=1.5.0',\
+    'tibble=3.2.1',\
+    'tidyr=1.3.0',\
+    'tidyselect=1.2.0',\
+    'tiff=0.1-6',\
+    'tools=4.0.3',\
+    'utils=4.0.3',\
+    'uwot=0.1.14',\
+    'vctrs=0.6.2',\
+    'withr=2.5.0'\
+  );\
+  install_version <- function(pkg){\
+    package_version <- unlist(strsplit(pkg, '='));\
+    package <- package_version[1];\
+    version <- package_version[2];\
+    if (!require(package, character.only = TRUE)) {\
+      install.packages(package, version = version, repos = paste0('http://cran.r-project.org/src/contrib/Archive/', package, '/'), dependencies = FALSE)\
+    }\
+  };\
+  invisible(sapply(packages, install_version))"
+
+
+# Install Bioconductor manager
+RUN R -e "if (!requireNamespace('BiocManager', quietly = TRUE)) install.packages('BiocManager')"
+
+# Install Bioconductor packages
+RUN R -e "BiocManager::install(c('rhdf5', 'DESeq2', 'edgeR'))"
+
+# Install preprocessCore with specific configuration
+RUN R -e "BiocManager::install('preprocessCore', configure.args='--disable-threading')"
+
+
+# Install remotes package
+RUN R -e "install.packages('remotes', repos='http://cran.rstudio.com/')"
+
+# Install specific versions of packages using remotes
+RUN R -e "remotes::install_version('shiny', version='1.6.0', repos='http://cran.rstudio.com/')"
+RUN R -e "remotes::install_version('shinydashboard', version='0.7.1', dependencies = FALSE, repos='http://cran.rstudio.com/')"
+RUN R -e "remotes::install_version('shinyWidgets', version='0.5.7', dependencies = FALSE, repos='http://cran.rstudio.com/')"
+
+

@@ -3,16 +3,21 @@
 # install.packages("shiny")
 
 
-source("preprocessing/functions/functions-spatial-data.R")
-source("preprocessing/functions/statistics-functions.R")
-source("preprocessing/functions/visualization-functions.R")
-source("preprocessing/functions/umi-per-spot.R")
+
+# read function
+source("/home/rstudio/preprocessing/functions/functions-spatial-data.R")
+source("/home/rstudio/preprocessing/functions/statistics-functions.R")
+source("/home/rstudio/preprocessing/functions/visualization-functions.R")
+source("/home/rstudio/preprocessing/functions/umi-per-spot.R")
+
 require(shiny)
 require(shinydashboard)
 
 # read metadata for risperidone
-metadata_risperidone <- read_metadata(file_path = "data/metadata-antipsychotics.tsv", 
+metadata_risperidone <- read_metadata(file_path = "/home/rstudio/data/metadata-antipsychotics.tsv", 
                                       treatments = c("saline", "risperidone"))
+
+
 
 # visualization test
 samples_saline <- metadata_risperidone %>% 
@@ -24,7 +29,8 @@ samples_risperidone <- metadata_risperidone %>%
   .[, 1]
 
 
-load("results/risperidone/risperidone.RData")
+load("/home/rstudio/results/risperidone/risperidone.RData")
+
 
 # Define the user interface
 ui <- fluidPage(
@@ -37,7 +43,7 @@ ui <- fluidPage(
                   "Select spatial data",
                   choices = c("risperidone_st_data_half",
                               "pz1190_st_data_half")),
-
+      
       # uiOutput("spatial_data"),
       
       HTML("<h5><b> Parameters for choosing data </b></h5>"), 
@@ -160,7 +166,7 @@ ui <- fluidPage(
 
 # Define the server logic
 server <- function(input, output, session) {
-  vals <- reactiveValues(cluster =  0, resolution = 0.5)
+  vals <- reactiveValues(cluster =  0, resolution = 0.05)
   
   observeEvent(input$update_values, {
     vals$cluster <- input$cluster
@@ -188,7 +194,7 @@ server <- function(input, output, session) {
                   choices = spatial_annotate() %>% .$gene_name)
     })
   })
-
+  
   # Render a DataTable in the Shiny app
   output$filter_statistics <- renderDataTable({
     
@@ -271,7 +277,7 @@ server <- function(input, output, session) {
   output$clusterPlot <- renderPlot({
     # visualize interest cluster
     spatial_cluster(spatial_data = get(input$spatial_data),
-                    resolution = input$resolution,
+                    resolution = vals$resolution,
                     samples = c(samples_saline, get(input$experiment_samples)),
                     palette = palette_allen, 
                     size= 1.2, 
@@ -279,18 +285,6 @@ server <- function(input, output, session) {
   },
   width = function() { as.integer(input$width_plot) },  # cast the input values to integer
   height = function() { as.integer(input$height_plot) + 200})
-  
-  # output$interestClusterPlot <- renderPlot({
-  #   # visualize interest cluster
-  #   spatial_interest_cluster(cluster = input$cluster,
-  #                            spatial_data = get(input$spatial_data),
-  #                            resolution = vals$resolution,
-  #                            samples = c(samples_saline, get(input$experiment_samples)),
-  #                            size= 1.3,
-  #                            ncol = 4)
-  # },
-  # width = function() { as.integer(input$width_plot) },  # cast the input values to integer
-  # height = function() { as.integer(input$height_plot) + 200})
   
   output$interestClusterPlot <- renderPlot({
     spatial_interest_cluster(cluster = vals$cluster,
@@ -306,13 +300,13 @@ server <- function(input, output, session) {
   output$plot_umis <- renderPlot({
     plot_umi_reads_cluster(spatial_data = get(input$spatial_data), 
                            data_type = "raw_data",
-                           resolution = 0.1,
-                           cluster = input$cluster) -> p1
+                           resolution = {{vals$resolution}},
+                           cluster = vals$cluster) -> p1
     
     plot_umi_reads_cluster(spatial_data = get(input$spatial_data),
                            data_type = {{input$data_type_visualization}},
-                           resolution = {{input$resolution}},
-                           cluster = input$cluster) -> p2
+                           resolution = {{vals$resolution}},
+                           cluster = vals$cluster) -> p2
     
     # Combine the plots using the patchwork package
     p1/p2
@@ -323,4 +317,3 @@ server <- function(input, output, session) {
 
 # Run the app
 shinyApp(ui = ui, server = server)
-
