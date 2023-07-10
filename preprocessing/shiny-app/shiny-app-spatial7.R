@@ -25,6 +25,7 @@ samples_risperidone <- metadata_risperidone %>%
 
 
 load("results/risperidone/risperidone.RData")
+load("results/risperidone/pz1190.RData")
 
 # Define the user interface
 ui <- fluidPage(
@@ -45,7 +46,7 @@ ui <- fluidPage(
       selectInput("summary_data",
                   "Select summary data",
                   choices = c("risperidone_summary_statistics_half",
-                              "pz1190_summary_statistics")),
+                              "pz1190_summary_statistics_half")),
       
       selectInput("experiment_samples",
                   "Select experiment samples: ",
@@ -75,17 +76,26 @@ ui <- fluidPage(
       
       HTML("<h5><b> Parameters for filtering statistics </b></h5>"), 
       
-      # Numeric input field in the same line as text
-      fluidRow(
-        column(4, numericInput("control_mean_threshold", "Control mean:", value = 0, min = 0, step = 0.1)),
-        column(4, numericInput("experiment_mean_threshold", "Experiment mean:", value = 0, min = 0, step = 0.1)),
-        column(4, numericInput("log2ratio_threshold", "log2ratio:", value = 0.5, min = 0, step = 0.1))
-      ),
+      # Custom CSS to restrict resizing to vertical only
+      tags$head(tags$style(HTML("#gene_names { resize: vertical;   height: 355px;  }"))),
       
+      # UI layout
       fluidRow(
-        column(4, numericInput("t_test_threshold", "t-Student test:", value = 0.05, min = 0, max = 1, step = 0.01)),
-        column(4, numericInput("wilcoxon_test_threshold", "Wilcoxon test:", value = 0.05, min = 0, max = 1, step = 0.01)),
-        column(4, numericInput("ks_test_threshold", "Kolmogorov-Smirnov:", value = 0.05, min = 0, max = 1, step = 0.01))
+        # Left column with parameters
+        column(6,
+               numericInput("control_mean_threshold", "Control Mean Threshold:", value = 0.2, step = 0.1),
+               numericInput("experiment_mean_threshold", "Experiment Mean Threshold:", value = 0.2, step = 0.1),
+               numericInput("log2ratio_threshold", "Log2Ratio Threshold:", value = 0.5, step = 0.1),
+               numericInput("t_test_threshold", "T-Student Test Threshold:", value = 0.05, step = 0.1),
+               numericInput("wilcoxon_test_threshold", "Wilcoxon Test Threshold:", value = 0.05, step = 0.1),
+               numericInput("ks_test_threshold", "Kolmogorov-Smirnov Test Threshold:", value = 0.05, step = 0.1)
+        ),
+        
+        # Right column with gene names input and submit button
+        column(6,
+               textAreaInput("gene_names", "Enter Gene Names:", rows = 5),
+               actionButton("submit_genes", "Submit Gene Names")
+        )
       ),
       
       HTML("<h5><b> Visualization parameters </b></h5>"), 
@@ -99,10 +109,6 @@ ui <- fluidPage(
       checkboxInput("tif_image", 
                     "Background image", 
                     value = TRUE),
-      
-      # selectInput("gene", 
-      #             "Select Gene:", 
-      #             choices = unique(df$gene_name)),
       
       fluidRow(
         column(6, uiOutput("gene")),
@@ -136,13 +142,23 @@ ui <- fluidPage(
       sliderInput("resolution", "Select resolution:", min = 0.05, max = 2, step = 0.05, value = 0.05),
       actionButton("update_values", "Update Resolution and Cluster")
       
-      
     ),
     
     mainPanel(
       
       # tableOutput("filter_statistics"),
       dataTableOutput("filter_statistics"),
+      
+      # # Add this to your UI layout
+      fluidRow(
+        column(4, 
+               div(style="display: inline-flex; align-items: center;", 
+                   tags$span("Enter Filename:", style="font-weight: bold; margin-right: 10px;"),
+                   textInput("filename", label = NULL, value = paste("results_", Sys.Date(), ".csv", sep = ""))
+               )
+        ),
+        column(4, downloadButton('downloadData', 'Download CSV'))
+      ),
       
       verbatimTextOutput("selected_info"),
       
@@ -173,7 +189,7 @@ server <- function(input, output, session) {
       names() %>% 
       .[grepl(paste(c("raw_data", "range_normalize", "quantile_normalize", "seurat"), collapse = "|"), .)]})
   
-  
+  # 1.5
   observeEvent(input$spatial_data, {
     output$data_type_visualization <- renderUI({
       selectInput("data_type_visualization", 
@@ -212,6 +228,20 @@ server <- function(input, output, session) {
       mutate_if(is.numeric, round, 4) %>% 
       select(-condition)
     
+
+    # This goes within your server function
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        # Use the filename inputted by the user. 
+        # If you still want to add the current date, you can do that too.
+        input$filename
+      },
+      content = function(file) {
+        # Assuming 'datatable_data' contains the data you want to export
+        write.csv(datatable_data, file, row.names = FALSE)
+      }
+    )
+    
     # The DataTable is created with the 'datatable' function
     # It is configured with options like paging, scrolling, export buttons, and so on
     # The 'formatStyle' function is used to prevent the content in the "peak" column from wrapping
@@ -221,7 +251,6 @@ server <- function(input, output, session) {
                              scrollY = TRUE,
                              # autoWidth = TRUE,
                              server = FALSE,
-                             dom = 'Bfrtip',
                              pageLength = 20,
                              buttons = c('csv', 'excel'),
                              columnDefs = list(list(targets = '_all', className = 'dt-center'))
@@ -231,9 +260,51 @@ server <- function(input, output, session) {
               filter = 'top',
               selection = 'single',
               rownames = FALSE
-    )  %>% formatStyle("peak","white-space"="nowrap")
-  }) 
+    ) %>% formatStyle("peak","white-space"="nowrap")
+
+  })
   
+  # This goes within your server function
+  observeEvent(input$submit_genes, {
+    # Split the text from the text area into a vector of genes
+    # Splitting by newline characters
+    gene_vector <- strsplit(input$gene_names, split = "\n")[[1]]
+    
+    # Remove leading/trailing whitespaces from the gene names
+    gene_vector <- trimws(gene_vector)
+    
+    # Remove leading/trailing special characters from the gene names
+    # This uses regex to remove non-alphanumeric characters at the start and end of each gene name
+    gene_vector <- gsub("^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", gene_vector)
+    
+    # Remove empty elements from the vector
+    gene_vector <- gene_vector[nzchar(gene_vector)]
+    
+    # Convert elements to lowercase
+    # gene_vector <- tolower(gene_vector)
+    
+    # Print the vector of genes to the console
+    print(gene_vector)
+    
+    # Filter the data based on other criteria
+    filter_data_statistics(summary_data = get(input$summary_data), 
+                           data_type = input$data_type_statistics, 
+                           resolution = input$resolution_statistics,
+                           metric = input$metric,
+                           control_mean_threshold = input$control_mean_threshold,
+                           experiment_mean_threshold = input$experiment_mean_threshold,
+                           log2ratio_threshold = input$log2ratio_threshold,
+                           t_test_threshold = input$t_test_threshold,
+                           wilcoxon_test_threshold = input$wilcoxon_test_threshold,
+                           ks_test_threshold = input$ks_test_threshold) -> filter_data
+    
+    filter_data <- filter_data[filter_data$gene %in% gene_vector, ]
+    
+    print(filter_data)
+    
+  })
+  
+  ### code to perform visualization
   
   # Observe when the gene selection changes and update the peak dropdown accordingly
   observeEvent(input$gene, {
@@ -308,6 +379,6 @@ server <- function(input, output, session) {
 }
 
 
-# Run the app
+  # Run the app
 shinyApp(ui = ui, server = server)
 
