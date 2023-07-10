@@ -7,21 +7,6 @@ source("/home/rstudio/preprocessing/functions/umi-per-spot.R")
 require(shiny)
 require(shinydashboard)
 
-# # read metadata for risperidone
-# metadata_risperidone <- read_metadata(file_path = "/home/rstudio/data/metadata-antipsychotics.tsv", 
-#                                       treatments = c("saline", "risperidone"))
-
-
-
-# # visualization test
-# samples_saline <- metadata_risperidone %>% 
-#   filter(treatment == "saline" & mouse_genotype == "wt") %>%
-#   .[, 1]
-# 
-# samples_risperidone <- metadata_risperidone %>% 
-#   filter(treatment == "risperidone" & mouse_genotype == "wt") %>%
-#   .[, 1]
-
 
 load("/home/rstudio/results/risperidone/risperidone.RData")
 load("/home/rstudio/results/pz1190/pz1190.RData")
@@ -33,28 +18,20 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       
-      selectInput("spatial_data",
-                  "Select spatial data",
-                  choices = c("risperidone_st_data_half",
-                              "pz1190_st_data_half")),
+      selectInput("drug", "Select Drug", choices = c("Risperidone", "PZ-1190")),
       
-      # uiOutput("spatial_data"),
+      selectInput("spatial_data", "Select spatial data", choices = NULL),
       
-      HTML("<h5><b> Parameters for choosing data </b></h5>"), 
+      HTML("<h5><b>Parameters for choosing data</b></h5>"),
       
-      selectInput("summary_data",
-                  "Select summary data",
-                  choices = c("risperidone_summary_statistics_half", 
-                              "pz1190_summary_statistics_half")),
+      selectInput("summary_data", "Select summary data", choices = NULL),
       
-      selectInput("experiment_samples",
-                  "Select experiment samples: ",
-                  choices = c("samples_risperidone", "samples_pz1190")),
+      selectInput("experiment_samples", "Select experiment samples", choices = NULL),
       
       selectInput("metric",
                   "Select metric",
                   choices = c("mean", 
-                              "median", "sum", "IQR", "diff_range", "var", "skewness", "kurtosis")),
+                              "median", "sum")),
       
       radioButtons("data_type_statistics", 
                    "Choose data type for statistics:", 
@@ -75,17 +52,27 @@ ui <- fluidPage(
       
       HTML("<h5><b> Parameters for filtering statistics </b></h5>"), 
       
-      # Numeric input field in the same line as text
-      fluidRow(
-        column(4, numericInput("control_mean_threshold", "Control mean:", value = 0, min = 0, step = 0.1)),
-        column(4, numericInput("experiment_mean_threshold", "Experiment mean:", value = 0, min = 0, step = 0.1)),
-        column(4, numericInput("log2ratio_threshold", "log2ratio:", value = 0.5, min = 0, step = 0.1))
-      ),
+      # Custom CSS to restrict resizing to vertical only
+      tags$head(tags$style(HTML("#gene_names { resize: vertical;   height: 355px;  }"))),
       
+      # UI layout
       fluidRow(
-        column(4, numericInput("t_test_threshold", "t-Student test:", value = 0.05, min = 0, max = 1, step = 0.01)),
-        column(4, numericInput("wilcoxon_test_threshold", "Wilcoxon test:", value = 0.05, min = 0, max = 1, step = 0.01)),
-        column(4, numericInput("ks_test_threshold", "Kolmogorov-Smirnov:", value = 0.05, min = 0, max = 1, step = 0.01))
+        # Left column with parameters
+        column(6,
+               numericInput("control_mean_threshold", "Control Mean Threshold:", value = 0.2, step = 0.1),
+               numericInput("experiment_mean_threshold", "Experiment Mean Threshold:", value = 0.2, step = 0.1),
+               numericInput("log2ratio_threshold", "Log2Ratio Threshold:", value = 0.5, step = 0.1),
+               numericInput("t_test_threshold", "T-Student Test Threshold:", value = 0.05, step = 0.1),
+               numericInput("wilcoxon_test_threshold", "Wilcoxon Test Threshold:", value = 0.05, step = 0.1),
+               numericInput("ks_test_threshold", "Kolmogorov-Smirnov Test Threshold:", value = 0.05, step = 0.1)
+        ),
+        
+        # Right column with gene names input and submit button
+        column(6,
+               textAreaInput("gene_names", "Enter Gene Names:", rows = 5),
+               actionButton("clear_genes", "Clear Gene Names", rows = 5)
+               # actionButton("submit_genes", "Submit Gene Names")
+        )
       ),
       
       HTML("<h5><b> Visualization parameters </b></h5>"), 
@@ -99,10 +86,6 @@ ui <- fluidPage(
       checkboxInput("tif_image", 
                     "Background image", 
                     value = TRUE),
-      
-      # selectInput("gene", 
-      #             "Select Gene:", 
-      #             choices = unique(df$gene_name)),
       
       fluidRow(
         column(6, uiOutput("gene")),
@@ -136,13 +119,23 @@ ui <- fluidPage(
       sliderInput("resolution", "Select resolution:", min = 0.05, max = 2, step = 0.05, value = 0.05),
       actionButton("update_values", "Update Resolution and Cluster")
       
-      
     ),
     
     mainPanel(
       
       # tableOutput("filter_statistics"),
       dataTableOutput("filter_statistics"),
+      
+      # # Add this to your UI layout
+      fluidRow(
+        column(4, 
+               div(style="display: inline-flex; align-items: center;", 
+                   tags$span("Enter Filename:", style="font-weight: bold; margin-right: 10px;"),
+                   textInput("filename", label = NULL, value = paste("results_", Sys.Date(), ".tsv", sep = ""))
+               )
+        ),
+        column(4, downloadButton('downloadData', 'Download TSV'))
+      ),
       
       verbatimTextOutput("selected_info"),
       
@@ -166,13 +159,48 @@ server <- function(input, output, session) {
     vals$resolution <- input$resolution
   })
   
+  observeEvent(input$drug, {
+    
+    if (input$drug == "Risperidone") {
+      
+      updateSelectInput(session, "spatial_data",
+                        choices = c("risperidone_st_data_half"),
+                        selected = "risperidone_st_data_half")
+      
+      updateSelectInput(session, "summary_data",
+                        choices = c("risperidone_summary_statistics_half"),
+                        selected = "risperidone_summary_statistics_half")
+      
+      updateSelectInput(session, "experiment_samples",
+                        choices = c("samples_risperidone"),
+                        selected = "samples_risperidone")
+      
+    } else if (input$drug == "PZ-1190") {
+      
+      updateSelectInput(session, "spatial_data",
+                        choices = c("pz1190_st_data_half"),
+                        selected = "pz1190_st_data_half")
+      
+      updateSelectInput(session, "summary_data",
+                        choices = c("pz1190_summary_statistics_half"),
+                        selected = "pz1190_summary_statistics_half")
+      
+      updateSelectInput(session, "experiment_samples",
+                        choices = c("samples_pz1190"),
+                        selected = "samples_pz1190")
+      
+    }
+    
+    # You can add more conditions for additional drugs here
+    
+  })
+  
   
   spatial_annotate <- reactive({get(input$spatial_data)[[input$data_type_visualization]]$annotate})
   
   data_type_vector <-  reactive({get(input$spatial_data) %>%
       names() %>% 
       .[grepl(paste(c("raw_data", "range_normalize", "quantile_normalize", "seurat"), collapse = "|"), .)]})
-  
   
   observeEvent(input$spatial_data, {
     output$data_type_visualization <- renderUI({
@@ -188,52 +216,92 @@ server <- function(input, output, session) {
     })
   })
   
-  # Render a DataTable in the Shiny app
+  observeEvent(input$clear_genes, {
+    # Update the text area input with an empty string, effectively clearing it.
+    updateTextAreaInput(session, "gene_names", value = "")
+  })
+  
+  # Reactive expression for gene vector with debounce
+  gene_vector <- reactive({
+    gene_vector <- strsplit(input$gene_names, split = "\n")[[1]]
+    gene_vector <- trimws(gene_vector)
+    gene_vector <- gsub("^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "", gene_vector)
+    gene_vector <- gene_vector[nzchar(gene_vector)]
+    gene_vector <- tolower(gene_vector)
+    print(gene_vector)
+    
+    return(gene_vector)
+  }) %>% debounce(500)  # 500ms debounce
+  
+  # Reactive expression for filtered data
+  filtered_data <- reactive({
+    # Initial filtering steps
+    data <- filter_data_statistics(
+      summary_data = get(input$summary_data), 
+      data_type = input$data_type_statistics, 
+      resolution = input$resolution_statistics,
+      metric = input$metric,
+      control_mean_threshold = input$control_mean_threshold,
+      experiment_mean_threshold = input$experiment_mean_threshold,
+      log2ratio_threshold = input$log2ratio_threshold,
+      t_test_threshold = input$t_test_threshold,
+      wilcoxon_test_threshold = input$wilcoxon_test_threshold,
+      ks_test_threshold = input$ks_test_threshold
+    )
+    
+    # Get gene_vector
+    gene_vector <- gene_vector()
+    
+    # Filter by genes if gene_vector is not empty
+    if (length(gene_vector) > 0) {
+      data <- data %>%
+        # filter(gene %in% gene_vector)
+        mutate(gene_filt = tolower(gene)) %>%
+        filter(gene_filt %in% gene_vector) %>%
+        select(-gene_filt)
+      # data[data$gene %in% gene_vector, ]
+    }
+    
+    # Return the filtered data
+    return(data)
+  })
+  
+  # Use the filtered_data for rendering the DataTable
   output$filter_statistics <- renderDataTable({
-    
-    # The 'filter_data_statistics' function is called with inputs from the Shiny app's UI
-    # This function seems to process/ filter the summary data based on several conditions
-    # The filtered data is stored in the 'filter_data' object
-    filter_data_statistics(summary_data = get(input$summary_data), 
-                           data_type = input$data_type_statistics, 
-                           resolution = input$resolution_statistics,
-                           metric = input$metric,
-                           control_mean_threshold = input$control_mean_threshold,
-                           experiment_mean_threshold = input$experiment_mean_threshold,
-                           log2ratio_threshold = input$log2ratio_threshold,
-                           t_test_threshold = input$t_test_threshold,
-                           wilcoxon_test_threshold = input$wilcoxon_test_threshold,
-                           ks_test_threshold = input$ks_test_threshold) -> filter_data
-    
-    # The 'filter_data' object is passed through a pipeline:
-    # - Numeric columns are rounded to 4 decimal places with the 'mutate_if' function
-    # - The column "condition" is removed from the data with the 'select' function
-    datatable_data <- filter_data %>% 
-      mutate_if(is.numeric, round, 4) %>% 
+    datatable_data <- filtered_data() %>%
+      mutate_if(is.numeric, round, 4) %>%
       select(-condition)
     
-    # The DataTable is created with the 'datatable' function
-    # It is configured with options like paging, scrolling, export buttons, and so on
-    # The 'formatStyle' function is used to prevent the content in the "peak" column from wrapping
     datatable(datatable_data,
               options = list(paging = TRUE,
                              scrollX = TRUE,
                              scrollY = TRUE,
-                             # autoWidth = TRUE,
                              server = FALSE,
-                             dom = 'Bfrtip',
                              pageLength = 20,
-                             buttons = c('csv', 'excel'),
+                             # buttons = c('csv', 'excel'),
                              columnDefs = list(list(targets = '_all', className = 'dt-center'))
-                             # list(targets = c(0, 8, 9), visible = FALSE))
               ),
               extensions = 'Buttons',
               filter = 'top',
               selection = 'single',
               rownames = FALSE
-    )  %>% formatStyle("peak","white-space"="nowrap")
-  }) 
+    ) %>% formatStyle("peak", "white-space" = "nowrap")
+  })
   
+  # Use the filtered_data for downloading
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      input$filename
+    },
+    content = function(file) {
+      datatable_data <- filtered_data() %>%
+        mutate_if(is.numeric, round, 4) %>%
+        select(-condition)
+      write.table(datatable_data, file, row.names = FALSE, sep = "\t", quote = FALSE)
+    }
+  )
+  
+  ### code to perform visualization
   
   # Observe when the gene selection changes and update the peak dropdown accordingly
   observeEvent(input$gene, {
