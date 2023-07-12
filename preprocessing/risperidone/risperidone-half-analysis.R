@@ -152,7 +152,7 @@ save(samples_saline,
      risperidone_integrate_half,
      risperidone_st_data_half,
      risperidone_summary_statistics_half, 
-     file = "results/risperidone/risperidone.RData")
+     file = "results/risperidone/risperidone-half.RData")
 
 
 

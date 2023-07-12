@@ -28,7 +28,7 @@ samples_saline <- metadata_clozapine %>%
 
 samples_clozapine <- metadata_clozapine %>% 
   filter(treatment == "clozapine" & mouse_genotype == "wt") %>%
-  .[, 1] %>% .[c(1,4,6)]
+  .[, 1]
 
 sample_names <- c(samples_saline, samples_clozapine)
 
