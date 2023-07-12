@@ -1,32 +1,16 @@
-# # Load the libraries
-# install.packages("shinydashboard")
-# install.packages("shiny")
+# read function
+source("/home/rstudio/preprocessing/functions/functions-spatial-data.R")
+source("/home/rstudio/preprocessing/functions/statistics-functions.R")
+source("/home/rstudio/preprocessing/functions/visualization-functions.R")
+source("/home/rstudio/preprocessing/functions/umi-per-spot.R")
 
-
-source("preprocessing/functions/functions-spatial-data.R")
-source("preprocessing/functions/statistics-functions.R")
-source("preprocessing/functions/visualization-functions.R")
-source("preprocessing/functions/umi-per-spot.R")
 require(shiny)
 require(shinydashboard)
 
-# read metadata for risperidone
-metadata_risperidone <- read_metadata(file_path = "data/metadata-antipsychotics.tsv", 
-                                      treatments = c("saline", "risperidone"))
 
-# visualization test
-samples_saline <- metadata_risperidone %>% 
-  filter(treatment == "saline" & mouse_genotype == "wt") %>%
-  .[, 1]
-
-samples_risperidone <- metadata_risperidone %>% 
-  filter(treatment == "risperidone" & mouse_genotype == "wt") %>%
-  .[, 1]
-
-
-load("results/risperidone/risperidone.RData")
-load("results/pz1190/pz1190-half.RData")
-load("results/clozapine/clozapine-half.RData")
+load("/home/rstudio/results/risperidone/risperidone-half.RData")
+load("/home/rstudio/results/pz1190/pz1190-half.RData")
+load("/home/rstudio/results/clozapine/clozapine-half.RData")
 
 # Define the DPI
 dpi <- 72
@@ -300,7 +284,7 @@ server <- function(input, output, session) {
         mutate(gene_filt = tolower(gene)) %>%
         filter(gene_filt %in% gene_vector) %>%
         select(-gene_filt)
-        # data[data$gene %in% gene_vector, ]
+      # data[data$gene %in% gene_vector, ]
     }
     
     # Return the filtered data
@@ -343,18 +327,18 @@ server <- function(input, output, session) {
   )
   
   ### code to perform visualization
-
+  
   
   # Observe when the gene selection changes and update the peak dropdown accordingly
   observeEvent(input$gene, {
     df <- spatial_annotate()
     # Filter the data based on the selected gene
     filtered_df <- df[df$gene_name == input$gene,]
-
+    
     # Update the choices in the peak dropdown
     updateSelectInput(session, "peak", choices = unique(filtered_df$peak_id))
   })
-
+  
   # Show the selected gene and peak
   output$selected_info <- renderPrint({
     paste("Selected gene:", input$gene, "\nSelected peak:", input$peak)
@@ -387,7 +371,7 @@ server <- function(input, output, session) {
       # The sep = '' argument means that there will be no separation between the concatenated elements
       paste0(input$gene, '-', input$peak, '-', input$data_type_visualization, '.png')
     },
-
+    
     # Define what will be downloaded
     # This function is also called when the user clicks the download button
     content = function(file) {
@@ -405,8 +389,8 @@ server <- function(input, output, session) {
                                  size = input$spot_size,
                                  tif_image = input$tif_image) +
               plot_layout(ncol = as.numeric({{input$num_columns}})) +
-            plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
-        
+              plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
+      
       # Close the png device
       dev.off()
     }
@@ -435,7 +419,7 @@ server <- function(input, output, session) {
                                  tif_image = input$tif_image) +
               plot_layout(ncol = as.numeric({{input$num_columns}})) +
               plot_annotation(title = paste0(input$gene, ": ", input$peak)))
-        
+      
       # Close the SVG device
       dev.off()
     }

@@ -25,12 +25,10 @@ samples_risperidone <- metadata_risperidone %>%
 
 
 load("results/risperidone/risperidone.RData")
-load("results/pz1190/pz1190-half.RData")
-load("results/clozapine/clozapine-half.RData")
+load("results/pz1190/pz1190.RData")
 
-# Define the DPI
-dpi <- 72
-
+library(future)
+plan(multisession) 
 # Define the user interface
 ui <- fluidPage(
   titlePanel("Gene and Peak Selection"),
@@ -90,8 +88,13 @@ ui <- fluidPage(
         # Right column with gene names input and submit button
         column(6,
                textAreaInput("gene_names", "Enter Gene Names:", rows = 5),
+               # column(12, progressBar("calcProgress", value = 0, color = "success"))
+               fluidRow(
+                 column(6, actionButton("download_plots", "Download plots", width = "100%")),
+                 column(6, actionButton("abort_download", "Abort download", width = "100%"))
+               ),
+               downloadButton("downloadFile", "Download Zip File"),
                actionButton("clear_genes", "Clear Gene Names", rows = 5)
-               # actionButton("submit_genes", "Submit Gene Names")
         )
       ),
       
@@ -161,13 +164,7 @@ ui <- fluidPage(
       
       plotOutput("peakPlot", height = "100%", width = "100%"),  
       
-      downloadButton('downloadSpatialFeaturePlotPNG', 'Download PNG'),
-      
-      downloadButton('downloadSpatialFeaturePlotSVG', 'Download SVG'),
-      
       plotOutput("clusterPlot", height = "100%", width = "100%"),
-      downloadButton('downloadSpatialClusterPNG', 'Download PNG'),
-      downloadButton('downloadSpatialClusterSVG', 'Download SVG'),
       
       plotOutput("interestClusterPlot", height = "100%", width = "100%"),
       
@@ -300,7 +297,7 @@ server <- function(input, output, session) {
         mutate(gene_filt = tolower(gene)) %>%
         filter(gene_filt %in% gene_vector) %>%
         select(-gene_filt)
-        # data[data$gene %in% gene_vector, ]
+      # data[data$gene %in% gene_vector, ]
     }
     
     # Return the filtered data
@@ -343,18 +340,18 @@ server <- function(input, output, session) {
   )
   
   ### code to perform visualization
-
+  
   
   # Observe when the gene selection changes and update the peak dropdown accordingly
   observeEvent(input$gene, {
     df <- spatial_annotate()
     # Filter the data based on the selected gene
     filtered_df <- df[df$gene_name == input$gene,]
-
+    
     # Update the choices in the peak dropdown
     updateSelectInput(session, "peak", choices = unique(filtered_df$peak_id))
   })
-
+  
   # Show the selected gene and peak
   output$selected_info <- renderPrint({
     paste("Selected gene:", input$gene, "\nSelected peak:", input$peak)
@@ -376,71 +373,6 @@ server <- function(input, output, session) {
   },
   width = function() { as.integer(input$width_plot) },  # cast the input values to integer
   height = function() { as.integer(input$height_plot) })
-  
-  # Define the server-side function for the download
-  output$downloadSpatialFeaturePlotPNG <- downloadHandler(
-    # Set the filename of the download
-    # This function is called when the user clicks the download button
-    # We name it according to the gene_name and peak from the user's input
-    filename = function() {
-      # The paste function concatenates the gene name, peak, and "_plot.png"
-      # The sep = '' argument means that there will be no separation between the concatenated elements
-      paste0(input$gene, '-', input$peak, '-', input$data_type_visualization, '.png')
-    },
-
-    # Define what will be downloaded
-    # This function is also called when the user clicks the download button
-    content = function(file) {
-      # Open a png device
-      png(filename = file, width = as.integer(input$width_plot), height = as.integer(input$height_plot))
-      
-      # Generate the plot
-      print(spatial_feature_plot(spatial_data = get(input$spatial_data),
-                                 type_data = {{input$data_type_visualization}},
-                                 peak_id = {{input$peak}},
-                                 samples = c(samples_saline, get(input$experiment_samples)),
-                                 min_percentile = input$min_percentile,
-                                 max_percentile = input$max_percentile,
-                                 normalization = {{input$zero_normalize}},
-                                 size = input$spot_size,
-                                 tif_image = input$tif_image) +
-              plot_layout(ncol = as.numeric({{input$num_columns}})) +
-            plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
-        
-      # Close the png device
-      dev.off()
-    }
-  )
-  
-  output$downloadSpatialFeaturePlotSVG <- downloadHandler(
-    # # Define the DPI
-    # dpi <- 96
-    
-    filename = function() {
-      paste0(input$gene, '-', input$peak, '.svg')
-    },
-    content = function(file) {
-      # Open an SVG device, converting pixels to inches
-      svg(filename = file, width = as.integer(input$width_plot) / dpi, height = as.integer(input$height_plot) / dpi)
-      
-      # Generate the plot
-      print(spatial_feature_plot(spatial_data = get(input$spatial_data),
-                                 type_data = {{input$data_type_visualization}},
-                                 peak_id = {{input$peak}},
-                                 samples = c(samples_saline, get(input$experiment_samples)),
-                                 min_percentile = input$min_percentile,
-                                 max_percentile = input$max_percentile,
-                                 normalization = {{input$zero_normalize}},
-                                 size = input$spot_size,
-                                 tif_image = input$tif_image) +
-              plot_layout(ncol = as.numeric({{input$num_columns}})) +
-              plot_annotation(title = paste0(input$gene, ": ", input$peak)))
-        
-      # Close the SVG device
-      dev.off()
-    }
-  )
-  
   
   output$clusterPlot <- renderPlot({
     # visualize interest cluster
@@ -465,57 +397,6 @@ server <- function(input, output, session) {
   width = function() { as.integer(input$width_plot) },  # cast the input values to integer
   height = function() { as.integer(input$height_plot) + 200})
   
-  # Download handler for downloading the cluster plot as a PNG image.
-  output$downloadSpatialClusterPNG <- downloadHandler(
-    filename = function() {
-      # Set the filename of the downloaded file.
-      # It is a .png file named 'cluster_plot'.
-      paste0(input$gene, '-', input$peak, '-', input$data_type_visualization, '.svg')
-    },
-    content = function(file) {
-      # Open a PNG device. The dimensions are specified in pixels.
-      png(filename = file, width = as.integer(input$width_plot), height = as.integer(input$height_plot) + 200)
-      
-      # Generate the plot.
-      # The 'print' function is used to draw the plot to the PNG device.
-      print(spatial_cluster(spatial_data = get(input$spatial_data),
-                            resolution = vals$resolution,
-                            samples = c(samples_saline, get(input$experiment_samples)),
-                            palette = palette_allen, 
-                            size= 1.2, 
-                            ncol = 4))
-      
-      # Close the PNG device. This is important because the file isn't actually written until the device is closed.
-      dev.off()
-    }
-  )
-  
-  # Download handler for downloading the cluster plot as an SVG image.
-  output$downloadSpatialClusterSVG <- downloadHandler(
-    filename = function() {
-      # Set the filename of the downloaded file.
-      # It is a .svg file named 'cluster_plot'.
-      paste0('cluster-plot-resolution', vals$resolution, '.svg')
-    },
-    content = function(file) {
-      # Open an SVG device. The dimensions are specified in inches, so we convert the pixel dimensions to inches by dividing by the DPI.
-      svg(filename = file, width = (as.integer(input$width_plot) / dpi), height = ((as.integer(input$height_plot) + 200) / dpi))
-      
-      # Generate the plot.
-      # The 'print' function is used to draw the plot to the SVG device.
-      print(spatial_cluster(spatial_data = get(input$spatial_data),
-                            resolution = vals$resolution,
-                            samples = c(samples_saline, get(input$experiment_samples)),
-                            palette = palette_allen, 
-                            size= 1.2, 
-                            ncol = 4))
-      
-      # Close the SVG device. This is important because the file isn't actually written until the device is closed.
-      dev.off()
-    }
-  )
-  
-  
   output$plot_umis <- renderPlot({
     plot_umi_reads_cluster(spatial_data = get(input$spatial_data), 
                            data_type = "raw_data",
@@ -530,6 +411,246 @@ server <- function(input, output, session) {
     # Combine the plots using the patchwork package
     p1/p2
   }, height = 800)
+  
+  
+  # # Create a reactive expression that will trigger when the download button is clicked
+  # observeEvent(input$download_plots, {
+  #   # Generate the plots and zip them
+  #   generate_plots_and_zip()
+  # })
+  # 
+  # generate_plots_and_zip <- function() {
+  #   
+  #   # Create a directory to store the png files
+  #   dir.create("plots")
+  #   
+  #   # Get a subset of the data that contains the genes of interest.
+  #   # The selected dataframe is then stored in 'peaks_df'.
+  #   clozapine_st_data_half$raw_data$annotate %>% 
+  #     filter(gene_name %in% clozapine_genes_vector) %>% 
+  #     select(c(peak_id, gene_name)) -> peaks_df
+  #   
+  #   shiny::withProgress(message = 'Generating plots...', value = 0, {
+  #     
+  #     for(i in seq_len(nrow(peaks_df[1:10,]))) {
+  #       # Extract the peak and gene values from the current row
+  #       peak <- peaks_df[i, "peak_id"]
+  #       gene <- peaks_df[i, "gene_name"]
+  #       
+  #       # Generate the filename for the png file
+  #       png_filename <- file.path("plots", paste0("plot_", gene, "-", peak, ".png"))
+  #       
+  #       # Initialize the png device with the generated filename
+  #       png(filename = png_filename, width = 1100, height = 750)
+  #       
+  #       # Generate the spatial feature plot
+  #       plot <- spatial_feature_plot(
+  #         spatial_data = clozapine_st_data_half,
+  #         type_data = "raw_data",
+  #         peak_id = peak,
+  #         samples = c(samples_saline, samples_clozapine),
+  #         normalization = TRUE,
+  #         tif_image = TRUE) +
+  #         plot_layout(ncol = 4) + 
+  #         plot_annotation(title = paste0(gene, ": ", peak))
+  #       
+  #       # Print the plot to the png file
+  #       print(plot)
+  #       
+  #       # Close the png device
+  #       dev.off()
+  #       
+  #       # Update the progress bar
+  #       shiny::incProgress(i / nrow(peaks_df[1:10,]))
+  #       
+  #     }
+  #   })
+  #   
+  #   # Close the progress bar after the loop finishes
+  #   close(pb)
+  #   
+  #   # Zip all the generated png files into 'plots.zip'
+  #   zip("plots.zip", files = "plots")
+  #   
+  #   # Delete the 'plots' directory and all its contents
+  #   unlink("plots", recursive = TRUE)
+  # }
+  # 
+  # 
+  # # Enable download of the zip file
+  # output$downloadFile <- downloadHandler(
+  #   filename = "plots.zip",
+  #   content = function(file) {
+  #     file.copy("plots.zip", file)
+  #   }
+  # )
+  
+  # # Create a reactiveValues object to control the loop
+  # control <- reactiveValues(abort = FALSE)
+  # 
+  # # Trigger abort when abort button is clicked
+  # observeEvent(input$abort_download, {
+  #   control$abort <- TRUE
+  # })
+  # 
+  # observeEvent(input$download_plots, {
+  #   # Reset abort flag at the beginning of process
+  #   control$abort <- FALSE
+  #   generate_plots_and_zip()
+  # })
+  # 
+  # generate_plots_and_zip <- function() {
+  #   
+  #   # Create a directory to store the png files
+  #   dir.create("plots")
+  #   
+  #   # Get a subset of the data that contains the genes of interest.
+  #   # The selected dataframe is then stored in 'peaks_df'.
+  #   clozapine_st_data_half$raw_data$annotate %>% 
+  #     filter(gene_name %in% clozapine_genes_vector) %>% 
+  #     select(c(peak_id, gene_name)) -> peaks_df
+  #   
+  #   shiny::withProgress(message = 'Generating plots...', value = 0, {
+  #     for(i in seq_len(nrow(peaks_df[1:10,]))) {
+  #       
+  #       # Check if abort button was pressed
+  #       if (control$abort) {
+  #         stop("Aborted by user")  # or return(), depending on what you want to do
+  #       }
+  #       
+  #       # Extract the peak and gene values from the current row
+  #       peak <- peaks_df[i, "peak_id"]
+  #       gene <- peaks_df[i, "gene_name"]
+  #       
+  #       # Generate the filename for the png file
+  #       png_filename <- file.path("plots", paste0("plot_", gene, "-", peak, ".png"))
+  #       
+  #       # Initialize the png device with the generated filename
+  #       png(filename = png_filename, width = 1100, height = 750)
+  #       
+  #       # Generate the spatial feature plot
+  #       plot <- spatial_feature_plot(
+  #         spatial_data = clozapine_st_data_half,
+  #         type_data = "raw_data",
+  #         peak_id = peak,
+  #         samples = c(samples_saline, samples_clozapine),
+  #         normalization = TRUE,
+  #         tif_image = TRUE) +
+  #         plot_layout(ncol = 4) + 
+  #         plot_annotation(title = paste0(gene, ": ", peak))
+  #       
+  #       # Print the plot to the png file
+  #       print(plot)
+  #       
+  #       # Close the png device
+  #       dev.off()
+  #       
+  #       # Update the progress bar
+  #       shiny::incProgress(i / nrow(peaks_df[1:10,]))
+  #     }
+  #   })
+  #   
+  #   # Close the progress bar after the loop finishes
+  #   close(pb)
+  #   
+  #   # Zip all the generated png files into 'plots.zip'
+  #   zip("plots.zip", files = "plots")
+  #   
+  #   # Delete the 'plots' directory and all its contents
+  #   unlink("plots", recursive = TRUE)
+  # }
+  # 
+  # 
+  # # Enable download of the zip file
+  # output$downloadFile <- downloadHandler(
+  #   filename = "plots.zip",
+  #   content = function(file) {
+  #     file.copy("plots.zip", file)
+  #   }
+  # )
+  # This will hold the future object
+  # This will hold the future object
+  progress <- reactiveVal(0)
+  should_abort <- reactiveVal(FALSE)
+  
+  # Create a reactive expression that will trigger when the download button is clicked
+  observeEvent(input$download_plots, {
+    should_abort(FALSE)  # Reset abort flag
+    progress(0)  # Reset progress
+    generate_plots_and_zip()
+  })
+  
+  generate_plots_and_zip <- function() {
+    # Create a directory to store the png files
+    dir.create("plots")
+    
+    # Get a subset of the data that contains the genes of interest.
+    clozapine_st_data_half$raw_data$annotate %>% 
+      filter(gene_name %in% clozapine_genes_vector) %>% 
+      select(c(peak_id, gene_name)) -> peaks_df
+    
+    for(i in seq_len(nrow(peaks_df[1:10,]))) {
+      if (should_abort() == TRUE) {
+        print("Download aborted")
+        unlink("plots", recursive = TRUE)  # Delete the 'plots' directory and all its contents
+        return()
+      }
+      
+      # Extract the peak and gene values from the current row
+      peak <- peaks_df[i, "peak_id"]
+      gene <- peaks_df[i, "gene_name"]
+      
+      # Generate the filename for the png file
+      png_filename <- file.path("plots", paste0("plot_", gene, "-", peak, ".png"))
+      
+      # Initialize the png device with the generated filename
+      png(filename = png_filename, width = 1100, height = 750)
+      
+      # Generate the spatial feature plot
+      plot <- spatial_feature_plot(
+        spatial_data = clozapine_st_data_half,
+        type_data = "raw_data",
+        peak_id = peak,
+        samples = c(samples_saline, samples_clozapine),
+        normalization = TRUE,
+        tif_image = TRUE) +
+        plot_layout(ncol = 4) + 
+        plot_annotation(title = paste0(gene, ": ", peak))
+      
+      # Print the plot to the png file
+      print(plot)
+      
+      # Close the png device
+      dev.off()
+      
+      # Update the progress
+      progress(i / nrow(peaks_df[1:10,]) * 100)
+    }
+    
+    # Zip all the generated png files into 'plots.zip'
+    zip("plots.zip", files = "plots")
+    
+    # Delete the 'plots' directory and all its contents
+    unlink("plots", recursive = TRUE)
+  }
+  
+  observeEvent(input$abort_download, {
+    should_abort(TRUE)
+  })
+  
+  # Enable download of the zip file
+  output$downloadFile <- downloadHandler(
+    filename = "plots.zip",
+    content = function(file) {
+      file.copy("plots.zip", file)
+    }
+  )
+  
+  # Watch the progress reactiveValues and update the progressBar
+  observe({
+    shinyWidgets::updateProgressBar(session, "plot_progress", value = progress())
+  })
+  
   
 }
 
