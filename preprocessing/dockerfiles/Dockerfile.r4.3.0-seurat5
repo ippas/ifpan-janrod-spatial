@@ -1,0 +1,30 @@
+# Use rocker/verse as a base image
+FROM rocker/verse:4.3.0
+
+
+# Install necessary system libraries
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libhdf5-dev \
+    libglpk40 \
+    libxt-dev \
+    libtiff-dev
+
+
+# Install the remotes package, which we'll need to download packages from GitHub
+RUN R -e "install.packages('remotes', repos = 'http://cran.us.r-project.org')"
+
+# Install Seurat v5 and other packages
+RUN R -e "remotes::install_github('satijalab/seurat', ref = 'seurat5', quiet = FALSE)"
+#RUN R -e "remotes::install_github('satijalab/seurat-data', ref = 'seurat5', quiet = FALSE)"
+#RUN R -e "remotes::install_github('satijalab/azimuth', ref = 'seurat5', quiet = FALSE)"
+#RUN R -e "remotes::install_github('satijalab/seurat-wrappers', ref = 'seurat5', quiet = FALSE)"
+#RUN R -e "remotes::install_github('timoast/signac', ref = 'seurat5', quiet = FALSE)"
+#RUN R -e "remotes::install_github('bnprks/BPCells', quiet = FALSE)"
+
+# Make sure the default command that runs is the bash shell
+CMD ["/bin/bash"]
