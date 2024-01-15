@@ -91,7 +91,7 @@ spatial_feature_plot <- function(spatial_data,
                          aes(grob = grob),
                          x = 0.5, y = 0.5) 
           } else {}} +
-          geom_point(shape = 21, colour = "black", size = size, stroke = 0.25, alpha = alpha) +
+          geom_point(shape = 21, colour = "black", size = size, stroke = 0, alpha = alpha) +
           coord_cartesian(expand = FALSE) +
           # chose correct scale fill gradientn during condition 
           {if(normalization == TRUE){
@@ -186,8 +186,8 @@ spatial_cluster <- function(spatial_data,
                          aes(grob = grob),
                          x = 0.5, y = 0.5) 
           } else {}} +
-          geom_point(shape = 21, colour = "black", size = size, stroke = 0.25, alpha = alpha) +
-          geom_point(shape = 21, colour = "black", size = size, stroke = 0.25)+
+          geom_point(shape = 21, colour = "black", size = size, stroke = 0, alpha = alpha) +
+          geom_point(shape = 21, colour = "black", size = size, stroke = 0)+
           coord_cartesian(expand = FALSE) +
           scale_fill_manual(values = palette)+
           xlim(0, max(spatial_data$bcs_information %>%
@@ -249,7 +249,8 @@ spatial_interest_cluster <- function(cluster,
                                      ...){
   mypalette <- rep("#555555", 38)
   names(mypalette) <- as.character(0:37)
-  mypalette[cluster + 1] <- "#00FF00"
+  # mypalette[cluster + 1] <- "#00FF00"
+  mypalette[cluster + 1] <- palette_allen[cluster + 1]
   
   spatial_cluster(palette = mypalette, 
                   ...)
@@ -364,7 +365,7 @@ spatial_feature_plot_cluster <- function(spatial_data,
           geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
                        aes(grob = grob),
                        x = 0.5, y = 0.5) +
-          geom_point(shape = 21, colour = "black", size = size, stroke = 0.25) +
+          geom_point(shape = 21, colour = "black", size = size, stroke = 0) +
           coord_cartesian(expand = FALSE) +
           # chose correct scale fill gradientn during condition 
           {if(normalization == TRUE){

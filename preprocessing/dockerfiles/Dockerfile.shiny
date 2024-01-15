@@ -1,0 +1,173 @@
+FROM rocker/shiny:4.0.3
+
+USER root
+
+# install system libraries
+RUN apt-get update -y && apt-get install -y \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libxml2-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libhdf5-dev \
+    libglpk40 \
+    libxt-dev \
+    libtiff-dev
+
+# Define a vector of packages to install
+RUN R -e "\
+  packages <- c(\
+    'DT',\
+    'GenomicRanges',\
+    'IRanges',\
+    'KernSmooth',\
+    'MASS',\
+    'Matrix',\
+    'MatrixGenerics',\
+    'R6',\
+    'RANN',\
+    'RColorBrewer',\
+    'RCurl',\
+    'ROCR',\
+    'RSQLite',\
+    'Rcpp',\
+    'RcppAnnoy',\
+    'RcppArmadillo',\
+    'RcppEigen',\
+    'RcppProgress',\
+    'RcppTOML',\
+    'Rhdf5lib',\
+    'Rtsne',\
+    'Seurat',\
+    'SeuratData',\
+    'SeuratObject',\
+    'bit64',\
+    'bmp',\
+    'caTools',\
+    'class',\
+    'cli',\
+    'cluster',\
+    'codetools',\
+    'cowplot',\
+    'cpp11',\
+    'crayon',\
+    'crosstalk',\
+    'data.table',\
+    'digest',\
+    'doSNOW',\
+    'dplyr',\
+    'e1071',\
+    'edgeR',\
+    'ellipsis',\
+    'enrichR',\
+    'fansi',\
+    'fitdistrplus',\
+    'foreach',\
+    'formatR',\
+    'future',\
+    'future.apply',\
+    'generics',\
+    'ggplot2',\
+    'ggrepel',\
+    'ggridges',\
+    'glue',\
+    'gplots',\
+    'grDevices',\
+    'graphics',\
+    'grid',\
+    'gridExtra',\
+    'gtable',\
+    'gtools',\
+    'hdf5r',\
+    'htmltools',\
+    'htmlwidgets',\
+    'httr',\
+    'ica',\
+    'igraph',\
+    'irlba',\
+    'isoband',\
+    'iterators',\
+    'jpeg',\
+    'jsonlite',\
+    'lattice',\
+    'leiden',\
+    'lifecycle',\
+    'lmtest',\
+    'magrittr',\
+    'matrixStats',\
+    'methods',\
+    'mgcv',\
+    'miniUI',\
+    'mnormt',\
+    'nlme',\
+    'parallel',\
+    'parallelly',\
+    'patchwork',\
+    'pbapply',\
+    'pillar',\
+    'pkgconfig',\
+    'plotly',\
+    'png',\
+    'polyclip',\
+    'promises',\
+    'psych',\
+    'purrr',\
+    'readbitmap',\
+    'remotes',\
+    'reticulate',\
+    'rjson',\
+    'rlang',\
+    'scales',\
+    'scattermore',\
+    'sctransform',\
+    'snow',\
+    'sourcetools',\
+    'spatstat.data',\
+    'spatstat.explore',\
+    'spatstat.geom',\
+    'spatstat.random',\
+    'spatstat.sparse',\
+    'spatstat.utils',\
+    'stats',\
+    'stats4',\
+    'stringi',\
+    'stringr',\
+    'tibble',\
+    'tidyr',\
+    'tidyselect',\
+    'tiff',\
+    'tools',\
+    'utils',\
+    'uwot',\
+    'vctrs',\
+    'withr'\
+  );\
+  install_packages <- function(pkg){\
+    if (!require(pkg, character.only = TRUE)) {\
+      install.packages(pkg, repos = 'http://cran.r-project.org',lib = '/usr/local/lib/R/site-library', dependencies = TRUE)\
+    }\
+  };\
+  invisible(sapply(packages, install_packages))"
+
+# Install Bioconductor manager
+RUN R -e "if (!requireNamespace('BiocManager', quietly = TRUE)) install.packages('BiocManager')"
+
+# Install Bioconductor packages
+RUN R -e "BiocManager::install(c('rhdf5', 'DESeq2', 'edgeR'))"
+
+# Install preprocessCore with specific configuration
+RUN R -e "BiocManager::install('preprocessCore', configure.args='--disable-threading')"
+
+# Configuration for shiny server
+RUN echo 'sanitize_errors off;disable_protocols xdr-streaming xhr-streaming iframe-eventsource iframe-htmlfile;' >> /etc/shiny-server/shiny-server.conf
+
+# Change ownership of the library directory to shiny user
+RUN chown -R shiny:shiny /usr/local/lib/R/site-library
+
+# Switch to shiny user
+USER shiny
+
+# Expose a port
+EXPOSE 3838
+
+CMD ["/usr/bin/shiny-server"]

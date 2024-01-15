@@ -229,6 +229,14 @@ perform_statistical_tests <-
       control_mean <- apply(control_expression, 1, mean, na.rm = T)
       experiment_mean <- apply(experiment_expression, 1, mean, na.rm = T)
       
+      control_sd <- apply(control_expression, 1, sd, na.rm = T)
+      experiment_sd <- apply(experiment_expression, 1, sd, na.rm = T)
+      
+      # # Calculate the Standard Error (SE) for each row in control_expression and experiment_expression
+      control_se <- apply(control_expression, 1, function(row) {sd(row) / sqrt(length(row))})
+      experiment_se <- apply(experiment_expression, 1, function(row) {sd(row) / sqrt(length(row))})
+      
+      
       log2ratio <- log2(rowMeans(experiment_expression, na.rm = TRUE) / rowMeans(control_expression, na.rm = TRUE)) %>%
         unname()
       
@@ -247,6 +255,10 @@ perform_statistical_tests <-
           condition = condition,
           control_mean = control_mean,
           experiment_mean = experiment_mean,
+          control_sd = control_sd,
+          experiment_sd = experiment_sd,
+          control_se = control_se,
+          experiment_se = experiment_se,
           control_skewness = control_skewness,
           experiment_skewness = experiment_skewness,
           control_kurtosis = control_kurtosis,
@@ -513,9 +525,10 @@ filter_cluster_statistics <- function(summary_data,
                                       log2ratio_threshold = 0,
                                       t_test_threshold = 1,
                                       wilcoxon_test_threshold = 1,
-                                      ks_test_threshold = 1) {
+                                      ks_test_threshold = 1,
+                                      include_samples = FALSE) {
   
-  # Function to filter cluster statistics
+  # Function to filter cluster statistics with an option to include sample data
   # This function retrieves data from a specified cluster, 
   # filters based on provided thresholds for various statistical measures,
   # and returns a data frame of the filtered statistics.
@@ -529,6 +542,7 @@ filter_cluster_statistics <- function(summary_data,
   # @param t_test_threshold A numeric value specifying the maximum acceptable t-test value. Default is 1.
   # @param wilcoxon_test_threshold A numeric value specifying the maximum acceptable Wilcoxon test value. Default is 1.
   # @param ks_test_threshold A numeric value specifying the maximum acceptable KS test value. Default is 1.
+  # @param include_samples A logical value indicating whether to include sample data in the output. Default is FALSE.
   # @return A data frame of the filtered cluster statistics.
   
   # Retrieve specific cluster statistics and convert to data frame
@@ -538,8 +552,14 @@ filter_cluster_statistics <- function(summary_data,
   peak <- summary_data[[cluster]]$peak
   gene <- summary_data[[cluster]]$gene
   
-  # Combine peak, gene, and statistics into a single data frame
-  cluster_statistics_df <- cbind(peak, gene, cluster = cluster, statistics)
+  # If include_samples is TRUE, retrieve control and experiment samples for specific cluster
+  if (include_samples) {
+    control_samples <- summary_data[[cluster]]$control[[metric]]
+    experiment_samples <- summary_data[[cluster]]$experiment[[metric]] 
+    cluster_statistics_df <- cbind(peak, gene, control_samples, experiment_samples, cluster = cluster, statistics)
+  } else {
+    cluster_statistics_df <- cbind(peak, gene, cluster = cluster, statistics)
+  }
   
   # Filter the data frame based on the provided thresholds
   cluster_statistics_df %>% 

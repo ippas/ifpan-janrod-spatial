@@ -156,11 +156,13 @@ save(samples_saline,
 
 
 
-# DimPlot(risperidone_integrate, reduction = "umap", 
-#         split.by = "sample", ncol = 4)
-# 
-# DimPlot(risperidone_integrate, reduction = "umap", 
-#         ncol = 4)
+DimPlot(risperidone_integrate_half, reduction = "umap",
+        split.by = "sample", ncol = 4)
+
+DimPlot(risperidone_integrate_half, reduction = "umap")
+
+# DimPlot(object = risperidone_integrate_half, reduction = "umap", group.by = )
+
 # 
 # visualize clusters
 # spatial_cluster(spatial_data = risperidone_st_data_half,

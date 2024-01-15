@@ -53,8 +53,16 @@ summarize_and_test(spatial_data = risperidone_st_data_half,
                    control_samples = samples_saline,
                    experiment_samples = samples_risperidone,
                    mean_threshold = 0,
-                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics
+                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics_half
 
+summarize_and_test(spatial_data = risperidone_st_data_half,
+                   trim = 0.05, 
+                   num_cores = 24,
+                   data_params_df = data_params_df[1,],
+                   control_samples = samples_saline,
+                   experiment_samples = samples_risperidone,
+                   mean_threshold = 0,
+                   metrics = c("mean", "median", "skewness", "kurtosis")) -> tmp 
 
 # compute_data_summary(spatial_data = risperidone_st_data_half,
 #                      resolution = 0.8,

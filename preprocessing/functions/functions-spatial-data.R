@@ -16,6 +16,18 @@ install_and_load <- function(package_name, bioc = FALSE, github = FALSE) {
   require(package_name, character.only = TRUE)
 }
 
+#install_and_load <- function(package_name) {
+#  if (!is.element(package_name, installed.packages()[,1])) {
+#    message(paste("Package", package_name, "not found"))
+#  } else {
+#    success <- require(package_name, character.only = TRUE)
+#    if (!success) {
+#      message(paste("Failed to load", package_name))
+#    }
+#  }
+#}
+
+
 # List of CRAN packages
 cran_packages <- c("ggplot2", "Matrix", "rjson", "cowplot", "RColorBrewer", "Seurat", 
                    "grid", "readbitmap", "dplyr", "data.table", "doSNOW", "hdf5r",
