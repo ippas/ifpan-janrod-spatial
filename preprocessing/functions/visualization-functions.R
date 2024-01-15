@@ -57,6 +57,7 @@ spatial_feature_plot <- function(spatial_data,
                                  alpha = 1,
                                  tif_image = TRUE,
                                  normalization = TRUE,
+                                 show_legend = TRUE,
                                  return_list = FALSE){
   
   
@@ -124,6 +125,10 @@ spatial_feature_plot <- function(spatial_data,
                 axis.text = element_blank(),
                 axis.ticks = element_blank())}
     
+    # Conditionally add or remove the legend
+    if (!show_legend) {
+      sample_plot <- sample_plot + theme(legend.position = "none")
+    }
     
     plot_list[[sample_id]] <- sample_plot
     
@@ -135,7 +140,7 @@ spatial_feature_plot <- function(spatial_data,
     wrap_plot <- wrap_plots(plot_list)
     return(wrap_plot)
   }
-
+  
   rm(preprocessing_data)
   
   # return(wrap_plot)
