@@ -74,6 +74,8 @@ ui <- fluidPage(
                     "Background image", 
                     value = TRUE),
       
+      checkboxInput("show_legend", "Show Legend", value = FALSE),
+      
       fluidRow(
         column(6, uiOutput("gene")),
         column(6, selectInput("peak", "Select Peak:", choices = NULL))
@@ -86,7 +88,7 @@ ui <- fluidPage(
       
       fluidRow(
         column(6, numericInput("width_plot", "Width:", 1100, min = 100, step = 10)),
-        column(6, numericInput("height_plot", "Height:", 750, min = 100, step = 10))
+        column(6, numericInput("height_plot", "Height:", 950, min = 100, step = 10))
       ),
       
       fluidRow(

@@ -82,11 +82,3 @@ spatial_cluster_select <- function(spatial_data,
 }
 
 
-spatial_cluster_select(spatial_data = risperidone_st_data_half,
-                resolution = 0.8,
-                samples = c(samples_saline, samples_risperidone),
-                palette = palette_allen,
-                size= 1.0,
-                tif_image = F,
-                # select_clusters = c(1,2),
-                ncol = 4)

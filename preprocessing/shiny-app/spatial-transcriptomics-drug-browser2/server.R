@@ -210,6 +210,7 @@ server <- function(input, output, session) {
                          max_percentile = input$max_percentile,
                          normalization = {{input$zero_normalize}},
                          size = input$spot_size,
+                         show_legend = input$show_legend,
                          tif_image = input$tif_image) +
       plot_layout(ncol = as.numeric({{input$num_columns}}))
   },
@@ -242,6 +243,7 @@ server <- function(input, output, session) {
                                  max_percentile = input$max_percentile,
                                  normalization = {{input$zero_normalize}},
                                  size = input$spot_size,
+                                 show_legend = input$show_legend,
                                  tif_image = input$tif_image) +
               plot_layout(ncol = as.numeric({{input$num_columns}})) +
               plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
@@ -261,7 +263,7 @@ server <- function(input, output, session) {
     content = function(file) {
       dpi <- 100  # You can adjust the DPI as needed
       # Open an SVG device, converting pixels to inches
-      svg(filename = file, width = as.integer(input$width_plot) / dpi, height = as.integer(input$height_plot + 200) / dpi)
+      svg(filename = file, width = as.integer(input$width_plot) / dpi, height = as.integer(input$height_plot) / dpi)
       
       # Generate the plot
       print(spatial_feature_plot(spatial_data = get(input$spatial_data),
@@ -272,6 +274,7 @@ server <- function(input, output, session) {
                                  max_percentile = input$max_percentile,
                                  normalization = {{input$zero_normalize}},
                                  size = input$spot_size,
+                                 show_legend = input$show_legend,
                                  tif_image = input$tif_image) +
               plot_layout(ncol = as.numeric({{input$num_columns}})) +
               plot_annotation(title = paste0(input$gene, ": ", input$peak)))
@@ -299,7 +302,7 @@ server <- function(input, output, session) {
     as.integer(input$width_plot)
   },  # cast the input values to integer
   height = function() {
-    as.integer(input$height_plot) + 200
+    as.integer(input$height_plot)
   })
   
   # output$interestClusterPlot <- renderPlot({
@@ -309,7 +312,6 @@ server <- function(input, output, session) {
   #                            samples = c(samples_saline, get(input$experiment_samples)),
   #                            size = input$spot_size,
   #                            ncol = 4)
-  # },
   # width = function() { as.integer(input$width_plot) },  # cast the input values to integer
   # height = function() { as.integer(input$height_plot) + 200})
   # 
@@ -360,7 +362,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       # Open a PNG device. The dimensions are specified in pixels.
-      png(filename = file, width = as.integer(input$width_plot), height = as.integer(input$height_plot) + 200)
+      png(filename = file, width = as.integer(input$width_plot), height = as.integer(input$height_plot))
       
       # Generate the plot.
       # The 'print' function is used to draw the plot to the PNG device.
@@ -392,7 +394,7 @@ server <- function(input, output, session) {
     content = function(file) {
       dpi <- 100  # You can adjust the DPI as needed
       # Open an SVG device. The dimensions are specified in inches, so we convert the pixel dimensions to inches by dividing by the DPI.
-      svg(filename = file, width = (as.integer(input$width_plot) / dpi), height = ((as.integer(input$height_plot + 200)) / dpi))
+      svg(filename = file, width = (as.integer(input$width_plot) / dpi), height = ((as.integer(input$height_plot)) / dpi))
       
       # Generate the plot.
       # The 'print' function is used to draw the plot to the SVG device.
