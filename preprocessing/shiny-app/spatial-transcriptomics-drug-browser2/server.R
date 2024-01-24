@@ -245,8 +245,8 @@ server <- function(input, output, session) {
                                  size = input$spot_size,
                                  show_legend = input$show_legend,
                                  tif_image = input$tif_image) +
-              plot_layout(ncol = as.numeric({{input$num_columns}})) +
-              plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
+              plot_layout(ncol = as.numeric({{input$num_columns}}))) #+
+              # plot_annotation(title = paste0(input$gene, ": ", input$peak))) 
       
       # Close the png device
       dev.off()
@@ -276,8 +276,8 @@ server <- function(input, output, session) {
                                  size = input$spot_size,
                                  show_legend = input$show_legend,
                                  tif_image = input$tif_image) +
-              plot_layout(ncol = as.numeric({{input$num_columns}})) +
-              plot_annotation(title = paste0(input$gene, ": ", input$peak)))
+              plot_layout(ncol = as.numeric({{input$num_columns}})))# +
+              # plot_annotation(title = paste0(input$gene, ": ", input$peak)))
       
       # Close the SVG device
       dev.off()
