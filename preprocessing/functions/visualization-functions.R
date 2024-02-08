@@ -47,6 +47,12 @@ myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
 ###############################################
 # prepare function to visualize interest peak #
 ###############################################
+# Custom palette function: gray to red
+my_custom_palette <- function(n) {
+  colors <- colorRampPalette(c("#EEEEEE", "#ff0000", "#bf0000", "#800000", "#400000"))(n)
+  return(colors)
+}
+
 spatial_feature_plot <- function(spatial_data,
                                  type_data,
                                  peak_id,
@@ -60,7 +66,6 @@ spatial_feature_plot <- function(spatial_data,
                                  show_legend = TRUE,
                                  return_list = FALSE){
   
-  
   # prepare data to create plot
   preprocessing_data <- spatial_data[[type_data]]$data[peak_id, ] %>%
     as.data.frame() %>%
@@ -70,10 +75,8 @@ spatial_feature_plot <- function(spatial_data,
     left_join(., spatial_data$bcs_information, by = c("barcode", "sample")) %>%
     mutate(max_perc = as.numeric(quantile(value, probs = c(max_percentile))),
            min_perc = as.numeric(quantile(value, probs = c(min_percentile))),
-           # trimming the extreme values to the adopted percentiles
            value = ifelse(value < max_perc, value, max_perc),
            value = ifelse(value > min_perc, value, min_perc),
-           # zero one normalization if normalization = TRUE
            value = if (normalization == TRUE){
              (value - min(value)) / (max(value) - min(value))
            } else {
@@ -85,53 +88,48 @@ spatial_feature_plot <- function(spatial_data,
   # creating plot
   for (sample_id in samples){
     sample_plot <- filter(preprocessing_data, sample == sample_id) %>%
-      # main part of creating plot
-      {ggplot(., aes(x = imagecol, y = imagerow, fill = value)) +
-          {if(tif_image == TRUE){
-            geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
-                         aes(grob = grob),
-                         x = 0.5, y = 0.5) 
-          } else {}} +
-          geom_point(shape = 21, colour = "black", size = size, stroke = 0, alpha = alpha) +
-          coord_cartesian(expand = FALSE) +
-          # chose correct scale fill gradientn during condition 
-          {if(normalization == TRUE){
-            scale_fill_gradientn(colours = myPalette(100), limits = c(0,1))
-          } else {
-            scale_fill_gradientn(colours = myPalette(100))
-          }} +
-          xlim(0, max(spatial_data$bcs_information %>%
-                        filter(sample == sample_id) %>%
-                        dplyr::select(width)))+
-          ylim(max(spatial_data$bcs_information %>%
-                     filter(sample == sample_id) %>%
-                     dplyr::select(height)), 0) +
-          # aesthetics plot
-          xlab("") +
-          ylab("") +
-          ggtitle(
-            paste(sample_id, 
-                  ": ",
-                  spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$treatment,
-                  ", ",
-                  spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$mouse_genotype,
-                  sep = "")
-          ) +
-          theme_set(theme_bw(base_size = 10))+
-          theme(panel.grid.major = element_blank(),
-                panel.grid.minor = element_blank(),
-                panel.background = element_blank(),
-                axis.line = element_line(colour = "black"),
-                axis.text = element_blank(),
-                axis.ticks = element_blank())}
+      ggplot(aes(x = imagecol, y = imagerow, fill = value)) +
+      {if(tif_image == TRUE){
+        geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
+                     aes(grob = grob),
+                     x = 0.5, y = 0.5) 
+      } else {}} +
+      geom_point(shape = 21, colour = "black", size = size, stroke = 0, alpha = alpha) +
+      coord_cartesian(expand = FALSE) +
+      {if(normalization == TRUE){
+        scale_fill_gradientn(colours = my_custom_palette(100), limits = c(0,1))
+      } else {
+        scale_fill_gradientn(colours = my_custom_palette(100))
+      }} +
+      xlim(0, max(spatial_data$bcs_information %>%
+                    filter(sample == sample_id) %>%
+                    dplyr::select(width)))+
+      ylim(max(spatial_data$bcs_information %>%
+                 filter(sample == sample_id) %>%
+                 dplyr::select(height)), 0) +
+      xlab("") +
+      ylab("") +
+      ggtitle(
+        paste(sample_id, 
+              ": ",
+              spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$treatment,
+              ", ",
+              spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$mouse_genotype,
+              sep = "")
+      ) +
+      theme_set(theme_bw(base_size = 10))+
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_blank(),
+            axis.line = element_line(colour = "black"),
+            axis.text = element_blank(),
+            axis.ticks = element_blank())
     
-    # Conditionally add or remove the legend
     if (!show_legend) {
       sample_plot <- sample_plot + theme(legend.position = "none")
     }
     
     plot_list[[sample_id]] <- sample_plot
-    
   }
   
   if(return_list == TRUE){
@@ -142,10 +140,106 @@ spatial_feature_plot <- function(spatial_data,
   }
   
   rm(preprocessing_data)
-  
-  # return(wrap_plot)
-  
 }
+# spatial_feature_plot <- function(spatial_data,
+#                                  type_data,
+#                                  peak_id,
+#                                  samples,
+#                                  min_percentile = 0.01,
+#                                  max_percentile = 0.99,
+#                                  size = 1.2,
+#                                  alpha = 1,
+#                                  tif_image = TRUE,
+#                                  normalization = TRUE,
+#                                  show_legend = TRUE,
+#                                  return_list = FALSE){
+#   
+#   
+#   # prepare data to create plot
+#   preprocessing_data <- spatial_data[[type_data]]$data[peak_id, ] %>%
+#     as.data.frame() %>%
+#     dplyr::rename(value = ".") %>% 
+#     rownames_to_column("sample_barcode") %>%
+#     separate("sample_barcode", c("sample", "barcode"), sep = "_") %>%
+#     left_join(., spatial_data$bcs_information, by = c("barcode", "sample")) %>%
+#     mutate(max_perc = as.numeric(quantile(value, probs = c(max_percentile))),
+#            min_perc = as.numeric(quantile(value, probs = c(min_percentile))),
+#            # trimming the extreme values to the adopted percentiles
+#            value = ifelse(value < max_perc, value, max_perc),
+#            value = ifelse(value > min_perc, value, min_perc),
+#            # zero one normalization if normalization = TRUE
+#            value = if (normalization == TRUE){
+#              (value - min(value)) / (max(value) - min(value))
+#            } else {
+#              value
+#            })
+#   
+#   plot_list <- list()
+#   
+#   # creating plot
+#   for (sample_id in samples){
+#     sample_plot <- filter(preprocessing_data, sample == sample_id) %>%
+#       # main part of creating plot
+#       {ggplot(., aes(x = imagecol, y = imagerow, fill = value)) +
+#           {if(tif_image == TRUE){
+#             geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
+#                          aes(grob = grob),
+#                          x = 0.5, y = 0.5) 
+#           } else {}} +
+#           geom_point(shape = 21, colour = "black", size = size, stroke = 0, alpha = alpha) +
+#           coord_cartesian(expand = FALSE) +
+#           # chose correct scale fill gradientn during condition 
+#           {if(normalization == TRUE){
+#             scale_fill_gradientn(colours = myPalette(100), limits = c(0,1))
+#           } else {
+#             scale_fill_gradientn(colours = myPalette(100))
+#           }} +
+#           xlim(0, max(spatial_data$bcs_information %>%
+#                         filter(sample == sample_id) %>%
+#                         dplyr::select(width)))+
+#           ylim(max(spatial_data$bcs_information %>%
+#                      filter(sample == sample_id) %>%
+#                      dplyr::select(height)), 0) +
+#           # aesthetics plot
+#           xlab("") +
+#           ylab("") +
+#           ggtitle(
+#             paste(sample_id, 
+#                   ": ",
+#                   spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$treatment,
+#                   ", ",
+#                   spatial_data$sample_information[spatial_data$sample_information$sample_ID == sample_id,]$mouse_genotype,
+#                   sep = "")
+#           ) +
+#           theme_set(theme_bw(base_size = 10))+
+#           theme(panel.grid.major = element_blank(),
+#                 panel.grid.minor = element_blank(),
+#                 panel.background = element_blank(),
+#                 axis.line = element_line(colour = "black"),
+#                 axis.text = element_blank(),
+#                 axis.ticks = element_blank())}
+#     
+#     # Conditionally add or remove the legend
+#     if (!show_legend) {
+#       sample_plot <- sample_plot + theme(legend.position = "none")
+#     }
+#     
+#     plot_list[[sample_id]] <- sample_plot
+#     
+#   }
+#   
+#   if(return_list == TRUE){
+#     return(plot_list)
+#   } else {
+#     wrap_plot <- wrap_plots(plot_list)
+#     return(wrap_plot)
+#   }
+#   
+#   rm(preprocessing_data)
+#   
+#   # return(wrap_plot)
+#   
+# }
 
 
 
