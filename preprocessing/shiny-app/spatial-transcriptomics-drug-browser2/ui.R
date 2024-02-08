@@ -104,6 +104,23 @@ ui <- fluidPage(
         )
       ),
       
+      fluidRow(
+        column(6,
+               h5(tags$b("Saline")),
+               lapply(c("S6269Nr1", "S6269Nr3", "S7788Nr1", "S7788Nr2", "S7788Nr3", "S7788Nr11"),
+                      function(x) checkboxInput(inputId = paste("saline_", gsub("Nr|S", "", x), sep = ""),
+                                                label = x, value = TRUE))),
+        column(6,
+               h5(tags$b("Experimental")),
+               lapply(c("S6230Nr3", "S6230Nr4", "S6269Nr2", "S6269Nr4", "S7788Nr15", "S7788Nr16"),
+                      function(x) checkboxInput(inputId = paste("experimental_", gsub("Nr|S", "", x), sep = ""),
+                                                label = x, value = TRUE)))
+      ),
+      
+      actionButton("update_samples", "Update Samples"),
+      
+      HTML("<h5><b> Select clusters </b></h5>"), 
+      
       # Dynamically create columns and distribute checkboxes
       lapply(1:3, function(col) {
         column(4,

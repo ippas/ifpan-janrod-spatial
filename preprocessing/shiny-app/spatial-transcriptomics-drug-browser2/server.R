@@ -24,7 +24,44 @@ server <- function(input, output, session) {
     selected
   })
   
+  # # Reactive expression for selected saline samples
+  # selected_saline_samples <- reactive({
+  #   saline_ids <- c("S6269Nr1", "S6269Nr3", "S7788Nr1", "S7788Nr2", "S7788Nr3", "S7788Nr11")
+  #   selected <- lapply(saline_ids, function(x) {
+  #     if(input[[paste("saline_", gsub("Nr|S", "", x), sep = "")]]) x
+  #   })
+  #   unlist(selected)
+  # })
+  # 
+  # # Reactive expression for selected experimental samples
+  # selected_experimental_samples <- reactive({
+  #   experimental_ids <- c("S6230Nr3", "S6230Nr4", "S6269Nr2", "S6269Nr4", "S7788Nr15", "S7788Nr16")
+  #   selected <- lapply(experimental_ids, function(x) {
+  #     if(input[[paste("experimental_", gsub("Nr|S", "", x), sep = "")]]) x
+  #   })
+  #   unlist(selected)
+  # })
   
+  selected_saline_samples <- eventReactive(input$update_samples, {
+    saline_ids <- c( "S6269Nr1",  "S6269Nr3",  "S7788Nr1",  "S7788Nr2",  "S7788Nr3",  "S7788Nr11")
+    selected <- lapply(saline_ids, function(x) {
+      input_id <- paste("saline_", gsub("Nr|S", "", x), sep = "")
+      if(isTruthy(input[[input_id]])) x
+    })
+    selected <- Filter(Negate(is.null), selected)  # Remove NULLs
+    unlist(selected)
+  }, ignoreNULL = FALSE)
+  
+  selected_experimental_samples <- eventReactive(input$update_samples, {
+    experimental_ids <- c("S6230Nr3", "S6230Nr4", "S6269Nr2", "S6269Nr4", "S7788Nr15", "S7788Nr16")
+    selected <- lapply(experimental_ids, function(x) {
+      input_id <- paste("experimental_", gsub("Nr|S", "", x), sep = "")
+      if(isTruthy(input[[input_id]])) x
+    })
+    selected <- Filter(Negate(is.null), selected)  # Remove NULLs
+    unlist(selected)
+  }, ignoreNULL = FALSE)
+
   observeEvent(input$drug, {
     
     if (input$drug == "Risperidone") {
@@ -74,6 +111,12 @@ server <- function(input, output, session) {
     # You can add more conditions for additional drugs here
     
   })
+  
+  drug_samples <- list(
+    "Risperidone" = c("S6230Nr3", "S6230Nr4", "S6269Nr2", "S6269Nr4", "S7788Nr15", "S7788Nr16"),
+    "PZ-1190" = c("S7788Nr4", "S7788Nr6", "S7788Nr7", "S7788Nr9", "S7788Nr10", "S7788Nr14"),
+    "Clozapine" = c("S6230Nr1", "S6230Nr2", "S7788Nr5", "S7788Nr8", "S7788Nr12", "S7788Nr13")
+  )
   
   
   spatial_annotate <- reactive({get(input$spatial_data)[[input$data_type_visualization]]$annotate})
@@ -205,7 +248,9 @@ server <- function(input, output, session) {
                          type_data = {{input$data_type_visualization}},
                          peak_id = {{input$peak}},
                          # samples =  c(samples_saline[-1], samples_risperidone[-3]),
-                         samples = c(samples_saline, get(input$experiment_samples)),
+                         # samples = c(samples_saline, get(input$experiment_samples)),
+                         # samples = c(selected_saline_samples(), selected_experimental_samples()),
+                         c(selected_saline_samples(), selected_experimental_samples()),
                          min_percentile = input$min_percentile,
                          max_percentile = input$max_percentile,
                          normalization = {{input$zero_normalize}},
@@ -238,7 +283,8 @@ server <- function(input, output, session) {
       print(spatial_feature_plot(spatial_data = get(input$spatial_data),
                                  type_data = {{input$data_type_visualization}},
                                  peak_id = {{input$peak}},
-                                 samples = c(samples_saline, get(input$experiment_samples)),
+                                 # samples = c(samples_saline, get(input$experiment_samples)),
+                                 c(selected_saline_samples(), selected_experimental_samples()),
                                  min_percentile = input$min_percentile,
                                  max_percentile = input$max_percentile,
                                  normalization = {{input$zero_normalize}},
@@ -269,7 +315,8 @@ server <- function(input, output, session) {
       print(spatial_feature_plot(spatial_data = get(input$spatial_data),
                                  type_data = {{input$data_type_visualization}},
                                  peak_id = {{input$peak}},
-                                 samples = c(samples_saline, get(input$experiment_samples)),
+                                 # samples = c(samples_saline, get(input$experiment_samples)),
+                                 c(selected_saline_samples(), selected_experimental_samples()),
                                  min_percentile = input$min_percentile,
                                  max_percentile = input$max_percentile,
                                  normalization = {{input$zero_normalize}},
@@ -284,19 +331,27 @@ server <- function(input, output, session) {
     }
   )
   
-  
   output$clusterPlot <- renderPlot({
     # visualize interest cluster
     spatial_cluster_select(
       spatial_data = get(input$spatial_data),
       resolution = vals$resolution,
-      samples = c(samples_saline, get(input$experiment_samples)),
+      # samples = c(samples_saline, get(input$experiment_samples)),
+      c(
+        selected_saline_samples(),
+        selected_experimental_samples()
+      ),
       palette = palette_allen,
       size = input$spot_size,
       select_clusters = vals$select_clusters,
       tif_image = input$tif_image,
-      ncol = 4
-    )
+      ncol = 1
+    ) +
+      plot_layout(ncol = as.numeric({
+        {
+          input$num_columns
+        }
+      }))
   },
   width = function() {
     as.integer(input$width_plot)
@@ -304,53 +359,6 @@ server <- function(input, output, session) {
   height = function() {
     as.integer(input$height_plot)
   })
-  
-  # output$interestClusterPlot <- renderPlot({
-  #   spatial_interest_cluster(cluster = vals$cluster,
-  #                            spatial_data = get(input$spatial_data),
-  #                            resolution = vals$resolution,
-  #                            samples = c(samples_saline, get(input$experiment_samples)),
-  #                            size = input$spot_size,
-  #                            ncol = 4)
-  # width = function() { as.integer(input$width_plot) },  # cast the input values to integer
-  # height = function() { as.integer(input$height_plot) + 200})
-  # 
-  # output$downloadInterestClusterPNG <- downloadHandler(
-  #   filename = function() {
-  #     paste0('interest-cluster-plot-resolution', vals$resolution, '.png')
-  #   },
-  #   content = function(file) {
-  #     png(filename = file, width = as.integer(input$width_plot), height = as.integer(input$height_plot) + 200)
-  #     
-  #     print(spatial_interest_cluster(cluster = vals$cluster,
-  #                                    spatial_data = get(input$spatial_data),
-  #                                    resolution = vals$resolution,
-  #                                    samples = c(samples_saline, get(input$experiment_samples)),
-  #                                    size = input$spot_size,
-  #                                    ncol = 4))
-  #     
-  #     dev.off()
-  #   }
-  # )
-  
-  # output$downloadInterestClusterSVG <- downloadHandler(
-  #   filename = function() {
-  #     paste0('interest-cluster-plot-resolution', vals$resolution, '.svg')
-  #   },
-  #   content = function(file) {
-  #     dpi <- 100  # You can adjust the DPI as needed
-  #     svg(filename = file, width = (as.integer(input$width_plot) / dpi), height = ((as.integer(input$height_plot) + 200)/ dpi))
-  #     
-  #     print(spatial_interest_cluster(cluster = vals$cluster,
-  #                                    spatial_data = get(input$spatial_data),
-  #                                    resolution = vals$resolution,
-  #                                    samples = c(samples_saline, get(input$experiment_samples)),
-  #                                    size = input$spot_size,
-  #                                    ncol = 4))
-  #     
-  #     dev.off()
-  #   }
-  # )
   
   
   # Download handler for downloading the cluster plot as a PNG image.
@@ -370,13 +378,19 @@ server <- function(input, output, session) {
         spatial_cluster_select(
           spatial_data = get(input$spatial_data),
           resolution = vals$resolution,
-          samples = c(samples_saline, get(input$experiment_samples)),
+          # samples = c(samples_saline, get(input$experiment_samples)),
+          c(selected_saline_samples(), selected_experimental_samples()),
           palette = palette_allen,
           size = input$spot_size,
           select_clusters = vals$select_clusters,
           tif_image = input$tif_image,
-          ncol = 4
-        )
+          ncol = 1
+        ) + 
+          plot_layout(ncol = as.numeric({
+            {
+              input$num_columns
+            }
+          }))
       )
       
       # Close the PNG device. This is important because the file isn't actually written until the device is closed.
@@ -402,13 +416,19 @@ server <- function(input, output, session) {
         spatial_cluster_select(
           spatial_data = get(input$spatial_data),
           resolution = vals$resolution,
-          samples = c(samples_saline, get(input$experiment_samples)),
+          # samples = c(samples_saline, get(input$experiment_samples)),
+          c(selected_saline_samples(), selected_experimental_samples()),
           palette = palette_allen,
           size = input$spot_size,
           select_clusters = vals$select_clusters,
           tif_image = input$tif_image,
-          ncol = 4
-        )
+          ncol = 1
+        ) + 
+          plot_layout(ncol = as.numeric({
+            {
+              input$num_columns
+            }
+          }))
       )
       
       # Close the SVG device. This is important because the file isn't actually written until the device is closed.

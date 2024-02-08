@@ -181,26 +181,32 @@ DimPlot(risperidone_integrate_half, reduction = "umap")
 #                          ncol = 4)
 # 
 # 
-# spatial_gene_plot(spatial_data = risperidone_st_data_half,
-#                   type_data = "quantile_normalize",
-#                   gene = "Itpk1",
-#                   samples =  c(samples_saline, samples_risperidone),
-#                   min_percentile = 0.00,
-#                   max_percentile = 1,
-#                   size = 0.8,
-#                   ncol = 4,
-#                   normalization = T)
+spatial_gene_plot(spatial_data = risperidone_st_data_half,
+                  type_data = "quantile_normalize",
+                  gene = "Itpk1",
+                  samples =  c(samples_saline, samples_risperidone),
+                  min_percentile = 0.00,
+                  max_percentile = 1,
+                  size = 0.8,
+                  ncol = 4,
+                  normalization = T)
 # 
-# spatial_gene_plot(spatial_data = risperidone_st_data_half,
-#                   type_data = "raw_data",
-#                   gene = "Egr4",
-#                   samples =  c(samples_saline, samples_risperidone),
-#                   min_percentile = 0.00,
-#                   max_percentile = 1,
-#                   size = 0.8,
-#                   ncol = 4,
-#                   normalization = T)
+spatial_gene_plot(spatial_data = risperidone_st_data_half,
+                  type_data = "raw_data",
+                  gene = "Sgk1",
+                  samples =  c(samples_saline, samples_risperidone),
+                  min_percentile = 0.00,
+                  max_percentile = 1,
+                  size = 1.4,
+                  ncol = 4,
+                  tif_image = F,
+                  normalization = T)
 
+# Custom palette function: gray to red
+my_custom_palette <- function(n) {
+  colors <- colorRampPalette(c("#EEEEEE", "#ff0000", "#bf0000", "#800000", "#400000"))(n)
+  return(colors)
+}
 
 # calculate_gene_expression_stats(spatial_data = risperidone_st_data,
 #                                 stat_test = "t.test",
