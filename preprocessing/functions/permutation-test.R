@@ -144,8 +144,10 @@ permutation_test <-
 permutation_test(spatial_data = risperidone_st_data_half,
                 control_treatment = "saline",
                 experiment_treatment = "risperidone",
-                number_permutation = 1,
+                number_permutation = 10,
                 seed = 10) -> tmp
+
+number_signif_results_per_cluster <- c("cluster_0"=2, "cluster_2"=2, "cluster_4"=1, "cluster_5"=4, "cluster_6"=13, "cluster_7"=5, "cluster_8"=6, "cluster_10"=4, "cluster_11"=25, "cluster_12"=22, "cluster_13"=9, "cluster_14"=6)
 
 permutation_test(spatial_data = risperidone_st_data_half,
                  control_treatment = "saline",
@@ -154,69 +156,4 @@ permutation_test(spatial_data = risperidone_st_data_half,
                  seed = 7) -> permutation_results_list_0.01
 
 # save(permutation_results_list, "results/tmp.RData")
-save(permutation_results_list_0.01, file = "results/permutation_resutls_0.01.RData")
-save(permutation_results_list, file = "results/permutation_resutls.RData")
-
-lapply(risperidone_summary_statistics_half$quantile_normalize$resolution_0.4, function(data){
-  data$statistics$mean %>% 
-    as.data.frame() %>% 
-    filter(wilcoxon_test < 0.05) %>% 
-    filter(log2ratio > 0.8) %>% 
-    filter(control_mean > 0.2 | experiment_mean > 0.2) %>% 
-    rownames() %>%  length()
-}) %>% unlist() 
-
-as.data.frame(do.call(rbind, permutation_results_list)) -> permutation_df
-
-as.data.frame(do.call(rbind, permutation_results_list_0.01)) -> permutation_df
-
-{permutation_df$cluster_13 >= 21} %>% sum
-
-lapply(tmp$summary_dat, function(data){
-  data$statistics$mean %>% 
-    as.data.frame() %>% 
-    filter(wilcoxon_test < 0.01) %>% 
-    filter(log2ratio > 0.8) %>% 
-    filter(control_mean > 0.2 | experiment_mean > 0.2) %>% 
-    rownames() %>%  length()
-}) %>% unlist()
-
-
-tmp$summary_data$cluster_0$statistics$mean %>% 
-  as.data.frame() %>% 
-  filter(wilcoxon_test < 0.05) %>% 
-  filter(log2ratio > 0.8) %>% 
-  filter(control_mean > 0.2 | experiment_mean > 0.2) %>% 
-  rownames() %>%  length()
-
-compute_data_summary(spatial_data = risperidone_st_data_half,
-                     resolution = 0.4,
-                     trim = 0.05,
-                     num_cores = 24,
-                     control_samples = samples_saline,
-                     experiment_samples = samples_risperidone,
-                     data_type = "raw_data",
-                     metrics = c("mean")) -> summary_data
-
-
-perform_statistical_tests(spatial_data =risperidone_st_data_half,
-                          summary_data = summary_data, 
-                          metric = "mean", 
-                          resolution = 0.4,
-                          num_cores = 24,
-                          mean_threshold = 0.2,
-                          control_samples = samples_saline,
-                          experiment_samples = samples_risperidone,
-                          quantile_normalization = T) -> summary_data
-
-
-
-
-summarize_and_test(spatial_data = risperidone_st_data_half,
-                   trim = 0.05, 
-                   num_cores = 24,
-                   data_params_df = data_params_df[1,],
-                   control_samples = samples_saline,
-                   experiment_samples = samples_risperidone,
-                   mean_threshold = 0,
-                   metrics = c("mean", "median", "skewness", "kurtosis")) -> tmp
+save(permutation_results_list_0.01, file = "results/risperidone/permutation_resutls_0.01.RData")

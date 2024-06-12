@@ -423,6 +423,8 @@ spatial_feature_plot_cluster <- function(spatial_data,
                                          max_percentile = 0.99,
                                          size = 1.2,
                                          resolution = 1,
+                                         show_legend = TRUE,
+                                         tif_image = TRUE,
                                          clusters,
                                          normalization = TRUE){
   name_column_resolution <- paste("cluster_resolution",
@@ -461,16 +463,26 @@ spatial_feature_plot_cluster <- function(spatial_data,
     sample_plot <- filter(preprocessing_data, sample == sample_id) %>%
       # main part of creating plot
       {ggplot(., aes(x = imagecol, y = imagerow, fill = value)) +
-          geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
-                       aes(grob = grob),
-                       x = 0.5, y = 0.5) +
+          {if(tif_image == TRUE){
+            geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
+                         aes(grob = grob),
+                         x = 0.5, y = 0.5) 
+          } else {}} +
+          # geom_spatial(data = spatial_data$images_information[spatial_data$images_information$sample == sample_id,],
+          #              aes(grob = grob),
+          #              x = 0.5, y = 0.5) +
           geom_point(shape = 21, colour = "black", size = size, stroke = 0) +
           coord_cartesian(expand = FALSE) +
           # chose correct scale fill gradientn during condition 
+          # {if(normalization == TRUE){
+          #   scale_fill_gradientn(colours = myPalette(100), limits = c(0,1))
+          # } else {
+          #   scale_fill_gradientn(colours = myPalette(100))
+          # }} +
           {if(normalization == TRUE){
-            scale_fill_gradientn(colours = myPalette(100), limits = c(0,1))
+            scale_fill_gradientn(colours = my_custom_palette(100), limits = c(0,1))
           } else {
-            scale_fill_gradientn(colours = myPalette(100))
+            scale_fill_gradientn(colours = my_custom_palette(100))
           }} +
           xlim(0, max(spatial_data$bcs_information %>%
                         filter(sample == sample_id) %>%
@@ -497,6 +509,9 @@ spatial_feature_plot_cluster <- function(spatial_data,
                 axis.text = element_blank(),
                 axis.ticks = element_blank())}
     
+    if (!show_legend) {
+      sample_plot <- sample_plot + theme(legend.position = "none")
+    }
     
     plot_list[[sample_id]] <- sample_plot
     
