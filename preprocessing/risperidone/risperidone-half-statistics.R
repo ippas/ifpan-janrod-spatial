@@ -94,5 +94,8 @@ summarize_and_test(spatial_data = risperidone_st_data_half,
 #                        log2ratio_threshold = 0.5,
 #                        t_test_threshold = 0.05)
 
+risperidone_summary_statistics_half$quantile_normalize$resolution_0.4$cluster_1
 
-
+risperidone_st_data_half$clusters %>% select(c(sample, cluster_resolution_0.4)) %>% group_by(sample, cluster_resolution_0.4) %>% summarise(number_of_spots = n(), .groups = 'drop') %>%
+  write.table(., file = "results/risperidone/sample_cluster_nspots.tsv", sep = "\t", row.names = F, col.names = T)
+                                                                                             
