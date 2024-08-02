@@ -249,7 +249,6 @@ spatial_feature_plot <- function(spatial_data,
 
 spatial_cluster <- function(spatial_data,
                             resolution,
-                            # seurat_object,
                             samples,
                             palette, 
                             size = 1.2,
@@ -264,7 +263,7 @@ spatial_cluster <- function(spatial_data,
   data_cluster <- spatial_data$clusters %>% 
     dplyr::select(sample, barcode, name_column_resolution) %>%
     dplyr::rename(cluster = name_column_resolution) %>%
-    left_join(., spatial_data$bcs_information, by = c("barcode", "sample"))
+    dplyr::left_join(., spatial_data$bcs_information, by = c("barcode", "sample"))
   
   # data_cluster <- FindClusters(seurat_object, resolution = resolution) %>% 
   #   .$seurat_clusters %>%
