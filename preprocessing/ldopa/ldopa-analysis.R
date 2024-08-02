@@ -32,7 +32,7 @@ sample_names <- c(samples_saline, samples_ldopa)
 info_peaks_ldopa <- read_gene_annotation(file_path = "data/ldopa/gene-annotation/peaks-annotate-reduction.tsv")
 
 # executes seurat analysis for ldopa
-ldopa_integrate <- integrate_data_seurat(path_to_data, nfeatures, dims)
+ldopa_integrate <- integrate_data_seurat(path_to_data, samples =  sample_names, nfeatures, dims)
 
 # read images to spatial transcriptoms for ldopa
 images_ldopa <- create_images_tibble(path_to_data, sample_names)
@@ -182,7 +182,7 @@ DimPlot(ldopa_integrate, reduction = "umap")
 # 
 # visualize clusters
 spatial_cluster(spatial_data = ldopa_st_data,
-                resolution = 0.4,
+                resolution =1,
                 samples = c(samples_saline, samples_ldopa),
                 palette = palette_allen,
                 size= 1.0,
@@ -229,20 +229,76 @@ my_custom_palette <- function(n) {
 
 ################################################################################
 # reduce data for ldopa
-ldopa_st_data[c("samples", "sample_information", "bcs_inforamtion", "images_information",  "clusters", "quantile_normalize_resolution_0.8", "quantile_normalize_1")] -> ldopa_st_data_reduced
+ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
+                "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
+
 ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] -> ldopa_summary_statistics_reduced
 
+ldopa_st_data %>% names
+ldopa_st_data$stability_results
+ldopa_st_data_reduced$samples
 
-save(samples_saline,
+
+ save(samples_saline,
      samples_ldopa,
      ldopa_integrate,
      ldopa_st_data_reduced,
      ldopa_summary_statistics_reduced,
      file = "results/ldopa/ldopa-reduced.RData")
-
+ 
+# testing of reduced set data
 
 ldopa_st_data %>% names
   
-ldopa_st_data[c("samples", "sample_information", "bcs_inforamtion", "i2mages_information", "raw_data", "clusters", "quantile_normalize_resolution_0.8", "quantile_normalize_1")] %>% object.size()
+ldopa_st_data[c("samples", "sample_information", "bcs_inforamtion", "images_information", "raw_data", "clusters", "quantile_normalize_resolution_0.8", "quantile_normalize_1")] %>% object.size()
 
 ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] %>% object.size()
+
+
+ldopa_summary_statistics_reduced
+
+
+spatial_interest_cluster(cluster = 3,
+                         # seurat_object = integrated_analysis,
+                         spatial_data = ldopa_st_data,
+                         resolution = 0.8,
+                         samples = c(samples_saline, samples_ldopa),
+                         size= 1,
+                         ncol = 4)
+
+
+ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
+                "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
+
+
+spatial_interest_cluster(cluster = 2,
+                         # seurat_object = integrated_analysis,
+                         spatial_data = ldopa_st_data_reduced,
+                         resolution = 1,
+                         samples = c(samples_saline, samples_ldopa),
+                         size= 1,
+                         ncol = 4)
+
+spatial_gene_plot(spatial_data = ldopa_st_data_reduced,
+                  type_data = "quantile_normalize_resolution_1",
+                  gene = "Sgk1",
+                  samples =  c(samples_saline, samples_ldopa),
+                  min_percentile = 0.00,
+                  max_percentile = 1,
+                  size = 1.4,
+                  ncol = 4,
+                  tif_image = F,
+                  normalization = T)
+
+spatial_cluster(spatial_data = ldopa_st_data_reduced,
+                resolution =1,
+                samples = c(samples_saline, samples_ldopa),
+                palette = palette_allen,
+                size= 1.0,
+                ncol = 4)
+
+ldopa_st_data$
+  
+ldopa_st_data_reduced %>% str
+
+ldopa_st_data_reduced[[6]]$annotate

@@ -69,7 +69,7 @@ for (package in additional_packages) {
 ##########################################################
 
 # function for seurat analysis
-integrate_data_seurat <- function(path_to_data, nfeatures = 2000, dims = 1:30) {
+integrate_data_seurat <- function(path_to_data, samples, nfeatures = 2000, dims = 1:30) {
   # This function integrates multiple single-cell RNA-seq datasets using the Seurat package in R.
   # It reads and processes each sample, merges them, normalizes the data, finds variable features,
   # identifies integration anchors, and finally integrates the data. After data integration,
@@ -85,6 +85,8 @@ integrate_data_seurat <- function(path_to_data, nfeatures = 2000, dims = 1:30) {
   
   # Get list of samples
   samples_name <- list.files(path = path_to_data)
+  
+  samples_name <- samples
   
   # Read and process each sample
   samples_list <- lapply(samples_name, function(sample_name) {
