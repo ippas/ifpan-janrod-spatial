@@ -27,7 +27,7 @@ Prepared index file for merged-samples.bam using:
 samtools index data/risperidone/gene-annotation/merged-samples.bam
 ```
 
-#####Analysis [MACS3](https://github.com/macs3-project/MACS)
+##### Analysis [MACS3](https://github.com/macs3-project/MACS)
 Command to run macs3 analysis using [matzieb/macs3](https://hub.docker.com/repository/docker/matzieb/macs3/general):
 ```
 docker run \
