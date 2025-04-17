@@ -5,7 +5,7 @@ Short description of treatment groups/subjects
 
 
 ## Methods
-This sections should be a description of preprocessin and analysis ready to be included in the publication
+This sections should be a description of preprocessing and analysis ready to be included in the publication
 
 
 ## Preprocessing
@@ -45,6 +45,13 @@ The script convert `bed` to `gtf` file.
 Script arguments:
   - -\-input - input file
   - -\-output - output file 
+
+
+#### Information about data
+1. `.fastq` files are available on the [SRA database](https://dataview.ncbi.nlm.nih.gov/object/PRJNA1143882).
+2. `.json` files for risperidone and saline are availabel [here](https://github.com/ippas/ifpan-janrod-spatial/tree/master/analysis/json-files)
+3. Brightfield H&E tissue images (`.tif` files) are available upon request.
+
 
 ## Analysis
 ### Prepare spaceranger
