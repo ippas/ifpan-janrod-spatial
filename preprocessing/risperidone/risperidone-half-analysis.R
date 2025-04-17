@@ -29,7 +29,7 @@ samples_risperidone <- metadata_risperidone %>%
 info_peaks_risperidone <- read_gene_annotation(file_path = "data/risperidone/gene-annotation/peaks-annotate-reduction.tsv")
 
 # executes seurat analysis for risperidone
-risperidone_integrate_half <- integrate_data_seurat(path_to_data, nfeatures, dims)
+risperidone_integrate_half <- integrate_data_seurat(path_to_data, sample_names, nfeatures, dims)
 
 # read images to spatial transcriptoms for risperidone
 images_risperidone_half <- create_images_tibble(path_to_data, sample_names)
@@ -193,7 +193,7 @@ spatial_gene_plot(spatial_data = risperidone_st_data_half,
 # 
 spatial_gene_plot(spatial_data = risperidone_st_data_half,
                   type_data = "raw_data",
-                  gene = "Sgk1",
+                  gene = "Drd1",
                   samples =  c(samples_saline, samples_risperidone),
                   min_percentile = 0.00,
                   max_percentile = 1,

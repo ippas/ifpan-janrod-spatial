@@ -172,21 +172,91 @@ save(samples_saline,
 
 
 
-DimPlot(ldopa_integrate, reduction = "umap",
-        split.by = "sample", ncol = 4)
-
-DimPlot(ldopa_integrate, reduction = "umap")
-
-# DimPlot(object = ldopa_integrate, reduction = "umap", group.by = )
-
+# DimPlot(ldopa_integrate, reduction = "umap",
+#         split.by = "sample", ncol = 4)
 # 
-# visualize clusters
+# DimPlot(ldopa_integrate, reduction = "umap")
+# 
+# # DimPlot(object = ldopa_integrate, reduction = "umap", group.by = )
+# 
+# # 
+# # visualize clusters
 spatial_cluster(spatial_data = ldopa_st_data,
                 resolution =1,
                 samples = c(samples_saline, samples_ldopa),
                 palette = palette_allen,
                 size= 1.0,
                 ncol = 4)
+#
+spatial_interest_cluster(cluster = 2,
+                         # seurat_object = integrated_analysis,
+                         spatial_data = ldopa_st_data,
+                         resolution = 0.8,
+                         samples = c(samples_saline, samples_ldopa),
+                         size= 1,
+                         ncol = 4)
+# 
+# # 
+# spatial_gene_plot(spatial_data = ldopa_st_data,
+#                   type_data = "quantile_normalize",
+#                   gene = "Itpk1",
+#                   samples =  c(samples_saline, samples_ldopa),
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 0.8,
+#                   ncol = 4,
+#                   normalization = T)
+# # 
+# spatial_gene_plot(spatial_data = ldopa_st_data,
+#                   type_data = "raw_data",
+#                   gene = "Sgk1",
+#                   samples =  c(samples_saline, samples_ldopa),
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 1.4,
+#                   ncol = 4,
+#                   tif_image = F,
+#                   normalization = T)
+# 
+# spatial_feature_plot_cluster
+# 
+# # Custom palette function: gray to red
+# my_custom_palette <- function(n) {
+#   colors <- colorRampPalette(c("#EEEEEE", "#ff0000", "#bf0000", "#800000", "#400000"))(n)
+#   return(colors)
+# }
+# 
+# 
+# ################################################################################
+# # reduce data for ldopa
+# ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
+#                 "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
+# 
+# ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] -> ldopa_summary_statistics_reduced
+# 
+# ldopa_st_data %>% names
+# ldopa_st_data$stability_results
+# ldopa_st_data_reduced$samples
+# 
+# 
+#  save(samples_saline,
+#      samples_ldopa,
+#      ldopa_integrate,
+#      ldopa_st_data_reduced,
+#      ldopa_summary_statistics_reduced,
+#      file = "results/ldopa/ldopa-reduced.RData")
+#  
+# # testing of reduced set data
+# 
+# ldopa_st_data %>% names
+#   
+# ldopa_st_data[c("samples", "sample_information", "bcs_inforamtion", "images_information", "raw_data", "clusters", "quantile_normalize_resolution_0.8", "quantile_normalize_1")] %>% object.size()
+# 
+# ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] %>% object.size()
+# 
+# 
+# ldopa_summary_statistics_reduced
+# 
 # 
 # spatial_interest_cluster(cluster = 3,
 #                          # seurat_object = integrated_analysis,
@@ -195,110 +265,50 @@ spatial_cluster(spatial_data = ldopa_st_data,
 #                          samples = c(samples_saline, samples_ldopa),
 #                          size= 1,
 #                          ncol = 4)
-
 # 
-spatial_gene_plot(spatial_data = ldopa_st_data,
-                  type_data = "quantile_normalize",
-                  gene = "Itpk1",
-                  samples =  c(samples_saline, samples_ldopa),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 0.8,
-                  ncol = 4,
-                  normalization = T)
 # 
-spatial_gene_plot(spatial_data = ldopa_st_data,
-                  type_data = "raw_data",
-                  gene = "Sgk1",
-                  samples =  c(samples_saline, samples_ldopa),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 1.4,
-                  ncol = 4,
-                  tif_image = F,
-                  normalization = T)
-
-spatial_feature_plot_cluster
-
-# Custom palette function: gray to red
-my_custom_palette <- function(n) {
-  colors <- colorRampPalette(c("#EEEEEE", "#ff0000", "#bf0000", "#800000", "#400000"))(n)
-  return(colors)
-}
-
-
-################################################################################
-# reduce data for ldopa
-ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
-                "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
-
-ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] -> ldopa_summary_statistics_reduced
-
-ldopa_st_data %>% names
-ldopa_st_data$stability_results
-ldopa_st_data_reduced$samples
-
-
- save(samples_saline,
-     samples_ldopa,
-     ldopa_integrate,
-     ldopa_st_data_reduced,
-     ldopa_summary_statistics_reduced,
-     file = "results/ldopa/ldopa-reduced.RData")
- 
-# testing of reduced set data
-
-ldopa_st_data %>% names
-  
-ldopa_st_data[c("samples", "sample_information", "bcs_inforamtion", "images_information", "raw_data", "clusters", "quantile_normalize_resolution_0.8", "quantile_normalize_1")] %>% object.size()
-
-ldopa_summary_statistics$quantile_normalize[c("resolution_0.8", "resolution_1")] %>% object.size()
+# ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
+#                 "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
+# 
+# 
+# spatial_interest_cluster(cluster = 2,
+#                          # seurat_object = integrated_analysis,
+#                          spatial_data = ldopa_st_data_reduced,
+#                          resolution = 1,
+#                          samples = c(samples_saline, samples_ldopa),
+#                          size= 1,
+#                          ncol = 4)
+# 
+# spatial_gene_plot(spatial_data = ldopa_st_data_reduced,
+#                   type_data = "quantile_normalize_resolution_1",
+#                   gene = "Sgk1",
+#                   samples =  c(samples_saline, samples_ldopa),
+#                   min_percentile = 0.00,
+#                   max_percentile = 1,
+#                   size = 1.4,
+#                   ncol = 4,
+#                   tif_image = F,
+#                   normalization = T)
+# 
+# spatial_cluster(spatial_data = ldopa_st_data_reduced,
+#                 resolution =1,
+#                 samples = c(samples_saline, samples_ldopa),
+#                 palette = palette_allen,
+#                 size= 1.0,
+#                 ncol = 4)
+# 
+# ldopa_st_data$
+#   
+# ldopa_st_data_reduced %>% str
+# 
+# ldopa_st_data_reduced[[6]]$annotate
 
 
-ldopa_summary_statistics_reduced
 
-
-spatial_interest_cluster(cluster = 3,
-                         # seurat_object = integrated_analysis,
-                         spatial_data = ldopa_st_data,
-                         resolution = 0.8,
-                         samples = c(samples_saline, samples_ldopa),
-                         size= 1,
-                         ncol = 4)
-
-
-ldopa_st_data[c("samples", "sample_information", "bcs_information", "images_information",  "seurat",  "clusters", 
-                "quantile_normalize_resolution_0.8",  "quantile_normalize_resolution_1"   )] -> ldopa_st_data_reduced
-
-
-spatial_interest_cluster(cluster = 2,
-                         # seurat_object = integrated_analysis,
-                         spatial_data = ldopa_st_data_reduced,
-                         resolution = 1,
-                         samples = c(samples_saline, samples_ldopa),
-                         size= 1,
-                         ncol = 4)
-
-spatial_gene_plot(spatial_data = ldopa_st_data_reduced,
-                  type_data = "quantile_normalize_resolution_1",
-                  gene = "Sgk1",
-                  samples =  c(samples_saline, samples_ldopa),
-                  min_percentile = 0.00,
-                  max_percentile = 1,
-                  size = 1.4,
-                  ncol = 4,
-                  tif_image = F,
-                  normalization = T)
-
-spatial_cluster(spatial_data = ldopa_st_data_reduced,
-                resolution =1,
-                samples = c(samples_saline, samples_ldopa),
-                palette = palette_allen,
-                size= 1.0,
-                ncol = 4)
-
-ldopa_st_data$
-  
-ldopa_st_data_reduced %>% str
-
-ldopa_st_data_reduced[[6]]$annotate
+#####
+# permutation_test(spatial_data = risperidone_st_data_half,
+#                  control_treatment = "saline",
+#                  experiment_treatment = "risperidone",
+#                  number_permutation = 10,
+#                  seed = 10) -> tmp
+# 
