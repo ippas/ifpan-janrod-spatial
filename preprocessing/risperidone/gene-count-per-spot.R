@@ -1,38 +1,13 @@
+library(progressr)
 
 risperidone_summary_statistics_half$raw_data
-
-
-risperidone_summary_statistics_half$raw_data$resolution_0.05$cluster_0$control$mean
-
-risperidone_integrate_half$nFeature_RNA %>% mean()
-
-risperidone_integrate_half@assays$RNA@data %>% dim
-
-
 
 peak_gene_mapping <- info_peaks_risperidone %>% 
   select(peak_id, gene_name) %>% 
   mutate(peak_id = str_replace_all(peak_id, "_", "-"))
 
-risperidone_integrate_half@assays$integrated@data %>% 
-  .[1:10, 1:10] %>% apply(., 2, is.na)
-
-
-info_peaks_risperidone %>% 
-  select(peak_id, gene_name) %>% 
-  head %>% 
-  mutate(peak_id = str_replace_all(peak_id, "-_", "-"))
-
-risperidone_integrate_half@assays$integrated@data %>% 
-  .[1:10, 1:10] %>% 
-  {colSums(. != 0)} %>% 
-  as.data.frame() %>%
-  tibble::rownames_to_column(var = "Column_Name")
-
-library(progressr)
 
 risperidone_integrate_half@assays$RNA@data %>% dim
-
 
 gene_sum_per_spot <- risperidone_integrate_half@assays$RNA@data %>%
   .[, 1:100] %>%
@@ -101,8 +76,16 @@ gene_sum_list %>%
   tibble::enframe(name = "sample_id", value = "value") %>%
   mutate(sample_group = str_extract(sample_id, "S[0-9]+Nr[0-9]+")) %>%
   group_by(sample_group) %>%
-  summarise(mean_value = mean(value))
+  summarise(
+    mean_value = mean(value, na.rm = TRUE),
+    median_value = median(value, na.rm = TRUE),
+    sd_value = sd(value, na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(sample_ID=sample_group) %>% 
+  as.data.frame() %>% 
+  left_join(., metadata_risperidone, by = "sample_ID")
 
+metadata_risperidone
 
 gene_sum_list %>%
   unlist() %>%

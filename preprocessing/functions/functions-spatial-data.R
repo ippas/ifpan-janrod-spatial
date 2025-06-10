@@ -201,55 +201,154 @@ create_images_tibble <- function(path_to_data, samples_name) {
   return(images_tibble)
 }
 
-# function to read barcode spot information
-create_barcode_data <- function(path_to_data, sample_names, images_tibble) {
-  # This function creates a merged table containing barcode spot information
-  # for all samples, including image dimensions and adjusted row/column positions.
+# # function to read barcode spot information OLD VERSION
+# create_barcode_data <- function(path_to_data, sample_names, images_tibble) {
+#   # This function creates a merged table containing barcode spot information
+#   # for all samples, including image dimensions and adjusted row/column positions.
+#   #
+#   # Input parameters:
+#   # path_to_data: The path to the directory containing the tissue images and barcode data.
+#   # samples_name: A vector of sample names used to build the file paths.
+#   # images_tibble: A tibble containing the image information, including sample name, height, and width.
+#   
+#   # Load the necessary libraries
+#   library(dplyr)
+#   library(rjson)
+#   
+#   # Create a merged table containing barcode spot information for all samples
+#   barcode_data <- lapply(sample_names, function(sample_name) {
+#     # Load tissue position data
+#     tissue_positions <- read.csv(
+#       paste(
+#         path_to_data,
+#         sample_name,
+#         "/outs/spatial/tissue_positions_list.csv",
+#         sep = ""
+#       ),
+#       col.names = c("barcode", "tissue", "row", "col", "imagerow", "imagecol"),
+#       header = FALSE
+#     )
+#     
+#     # Calculate image row and column positions using scale factors
+#     scale_factors <-
+#       paste(path_to_data,
+#             sample_name,
+#             "/outs/spatial/scalefactors_json.json",
+#             sep = "") %>%
+#       rjson::fromJSON(file = .)
+#     tissue_lowres_scalef <- scale_factors$tissue_lowres_scalef
+#     
+#     # Add image dimensions and adjusted row/column positions to the data
+#     tissue_positions %>%
+#       mutate(
+#         imagerow = imagerow * tissue_lowres_scalef,
+#         imagecol = imagecol * tissue_lowres_scalef,
+#         tissue = as.factor(tissue),
+#         height = images_tibble[images_tibble$sample == sample_name, ]$height,
+#         width = images_tibble[images_tibble$sample == sample_name, ]$width
+#       )
+#   }) %>%
+#     setNames(sample_names) %>%
+#     bind_rows(., .id = "sample")
+#   
+#   return(barcode_data)
+# }
+
+
+create_barcode_data <- function(path_to_data, sample_names, images_tibble, spaceranger_version = "1.3.1") {
+  # ------------------------------------------------------------------------------
+  # Function: create_barcode_data
   #
-  # Input parameters:
-  # path_to_data: The path to the directory containing the tissue images and barcode data.
-  # samples_name: A vector of sample names used to build the file paths.
-  # images_tibble: A tibble containing the image information, including sample name, height, and width.
+  # Description:
+  # This function generates a unified table of spatial transcriptomics barcode data
+  # for a list of samples processed using 10x Genomics Spaceranger. It supports both
+  # older and newer versions of Spaceranger that differ in the format and naming
+  # of the tissue position files (i.e., "tissue_positions_list.csv" in v1 vs
+  # "tissue_positions.csv" in v2+).
+  #
+  # The output is a standardized data frame containing spatial coordinates of barcodes
+  # scaled to low-resolution image space, with additional metadata for each sample,
+  # including image dimensions and sample ID. Column names are harmonized regardless
+  # of input format to: barcode, tissue, row, col, imagerow, imagecol, height, width, sample.
+  #
+  # Arguments:
+  # - path_to_data: (string) The root directory containing individual sample folders.
+  # - sample_names: (character vector) A list of sample folder names (each corresponding to a Spaceranger output).
+  # - images_tibble: (tibble/data.frame) A table with image dimensions per sample.
+  #                  It must contain columns: 'sample', 'height', and 'width'.
+  # - spaceranger_version: (string) The version of Spaceranger used for processing samples,
+  #                        e.g., "1.3.1" for older outputs, "3.1.3" for new ones.
+  #
+  # Returns:
+  # A merged data frame with standardized spatial barcode data for all samples.
+  # Columns: barcode, tissue, row, col, imagerow, imagecol, height, width, sample.
+  # ------------------------------------------------------------------------------
   
-  # Load the necessary libraries
-  library(dplyr)
-  library(rjson)
+  spaceranger_version <- trimws(as.character(spaceranger_version))
   
-  # Create a merged table containing barcode spot information for all samples
+  if (spaceranger_version %in% c("1.3.1")) {
+    version_mode <- "v1"
+  } else if (spaceranger_version %in% c("3.1.3")) {
+    version_mode <- "v2"
+  } else {
+    stop(paste("Unsupported Spaceranger version:", spaceranger_version))
+  }
+  
   barcode_data <- lapply(sample_names, function(sample_name) {
-    # Load tissue position data
-    tissue_positions <- read.csv(
-      paste(
-        path_to_data,
-        sample_name,
-        "/outs/spatial/tissue_positions_list.csv",
-        sep = ""
-      ),
-      col.names = c("barcode", "tissue", "row", "col", "imagerow", "imagecol"),
-      header = FALSE
-    )
+    tissue_file <- if (version_mode == "v1") "tissue_positions_list.csv" else "tissue_positions.csv"
+    tissue_path <- file.path(path_to_data, sample_name, "outs", "spatial", tissue_file)
+    scale_factors_path <- file.path(path_to_data, sample_name, "outs", "spatial", "scalefactors_json.json")
     
-    # Calculate image row and column positions using scale factors
-    scale_factors <-
-      paste(path_to_data,
-            sample_name,
-            "/outs/spatial/scalefactors_json.json",
-            sep = "") %>%
-      rjson::fromJSON(file = .)
+    if (!file.exists(tissue_path)) {
+      warning(paste("Missing file:", tissue_path))
+      return(NULL)
+    }
+    if (!file.exists(scale_factors_path)) {
+      warning(paste("Missing file:", scale_factors_path))
+      return(NULL)
+    }
+    
+    # Read tissue position data
+    tissue_positions <- if (version_mode == "v1") {
+      utils::read.csv(
+        tissue_path,
+        header = FALSE,
+        col.names = c("barcode", "tissue", "row", "col", "imagerow", "imagecol")
+      )
+    } else {
+      utils::read.csv(tissue_path, header = TRUE) %>%
+        dplyr::rename_with(tolower) %>%
+        dplyr::rename(
+          tissue = in_tissue,
+          row = array_row,
+          col = array_col,
+          imagerow = pxl_row_in_fullres,
+          imagecol = pxl_col_in_fullres
+        )
+    }
+    
+    scale_factors <- rjson::fromJSON(file = scale_factors_path)
     tissue_lowres_scalef <- scale_factors$tissue_lowres_scalef
     
-    # Add image dimensions and adjusted row/column positions to the data
-    tissue_positions %>%
-      mutate(
+    image_info <- dplyr::filter(images_tibble, sample == sample_name)
+    if (nrow(image_info) != 1) {
+      warning(paste("Missing image metadata for sample:", sample_name))
+      return(NULL)
+    }
+    
+    tissue_positions <- tissue_positions %>%
+      dplyr::mutate(
         imagerow = imagerow * tissue_lowres_scalef,
         imagecol = imagecol * tissue_lowres_scalef,
         tissue = as.factor(tissue),
-        height = images_tibble[images_tibble$sample == sample_name, ]$height,
-        width = images_tibble[images_tibble$sample == sample_name, ]$width
+        height = image_info$height,
+        width = image_info$width
       )
+    
+    return(tissue_positions)
   }) %>%
-    setNames(sample_names) %>%
-    bind_rows(., .id = "sample")
+    stats::setNames(sample_names) %>%
+    dplyr::bind_rows(., .id = "sample")
   
   return(barcode_data)
 }

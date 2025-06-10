@@ -1,0 +1,22 @@
+{
+  "name": "r-inspect-env",
+  "build": {
+    "dockerfile": "../tools/inspect.Dockerfile"
+  },
+  "workspaceFolder": "/workspace",
+  "extensions": [
+    "REditorSupport.r",
+    "vscode-R",
+    "ms-vscode-remote.remote-containers"
+  ],
+  "settings": {
+    "r.rterm.linux": "/usr/local/bin/R",
+    "r.sessionWatcher": true,
+    "r.lsp.debug": true,
+    "r.lsp.diagnostics": false
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+  ],
+  "remoteUser": "root"
+}

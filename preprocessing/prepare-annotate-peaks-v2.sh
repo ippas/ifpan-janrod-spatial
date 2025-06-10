@@ -49,57 +49,73 @@ while test $# -gt 0; do
     esac
 done  
 
-# Set default BAM file if not provided
-if [ -z "$bam_file" ]; then
-    bam_file="$data_dir/merged-samples.bam"
-fi
+# # Set default BAM file if not provided
+# if [ -z "$bam_file" ]; then
+#     bam_file="$data_dir/merged-samples.bam"
+# fi
 
 # Create temporary directory with prefix
 tmp_dir=$data_dir/${prefix}_tmp
 
-# Clean and recreate temp directory
-if [ -d "$tmp_dir" ]; then
-    echo "Removing old temporary directory: $tmp_dir"
-    rm -rf "$tmp_dir"
-fi
-mkdir -p "$tmp_dir"
+# # Clean and recreate temp directory
+# if [ -d "$tmp_dir" ]; then
+#     echo "Removing old temporary directory: $tmp_dir"
+#     rm -rf "$tmp_dir"
+# fi
+# mkdir -p "$tmp_dir"
 
-echo "1. Prepare BED files for LTR and gene peaks"
-bedtools intersect -u -a $macs_peaks -b $ltr_bed 2>/dev/null | \
-  awk '{print $0"\tltr"}' > $tmp_dir/${prefix}-peaks-ltr.bed
+# echo "1. Prepare BED files for LTR and gene peaks"
+# bedtools intersect -u -a $macs_peaks -b $ltr_bed 2>/dev/null | \
+#   awk '{print $0"\tltr"}' > $tmp_dir/${prefix}-peaks-ltr.bed
 
-bedtools intersect -v -a $macs_peaks -b $ltr_bed 2>/dev/null | \
-  awk '{print $0"\tgene"}' > $tmp_dir/${prefix}-peaks-gene.bed
+# bedtools intersect -v -a $macs_peaks -b $ltr_bed 2>/dev/null | \
+#   awk '{print $0"\tgene"}' > $tmp_dir/${prefix}-peaks-gene.bed
 
-echo "2. Extract reads by strand from BAM"
-samtools view -@ $number_threads -b -f 16 $bam_file > $tmp_dir/${prefix}-merged-samples-minus.bam
-samtools view -@ $number_threads -b -F 16 $bam_file > $tmp_dir/${prefix}-merged-samples-plus.bam
+# echo "2. Extract reads by strand from BAM"
+# samtools view -@ $number_threads -b -f 16 $bam_file > $tmp_dir/${prefix}-merged-samples-minus.bam
+# samtools view -@ $number_threads -b -F 16 $bam_file > $tmp_dir/${prefix}-merged-samples-plus.bam
 
-echo "3. Index the strand-specific BAM files"
-samtools index -@ $number_threads $tmp_dir/${prefix}-merged-samples-minus.bam
-samtools index -@ $number_threads $tmp_dir/${prefix}-merged-samples-plus.bam
+# echo "3. Index the strand-specific BAM files"
+# samtools index -@ $number_threads $tmp_dir/${prefix}-merged-samples-minus.bam
+# samtools index -@ $number_threads $tmp_dir/${prefix}-merged-samples-plus.bam
 
-echo "4. Compute coverage for LTR peaks"
-samtools bedcov $tmp_dir/${prefix}-peaks-ltr.bed $tmp_dir/${prefix}-merged-samples-minus.bam > $tmp_dir/${prefix}-peaks-ltr-coverage-minus.bed
-samtools bedcov $tmp_dir/${prefix}-peaks-ltr.bed $tmp_dir/${prefix}-merged-samples-plus.bam > $tmp_dir/${prefix}-peaks-ltr-coverage-plus.bed
+# echo "4. Compute coverage for LTR peaks"
+# samtools bedcov $tmp_dir/${prefix}-peaks-ltr.bed $tmp_dir/${prefix}-merged-samples-minus.bam > $tmp_dir/${prefix}-peaks-ltr-coverage-minus.bed
+# samtools bedcov $tmp_dir/${prefix}-peaks-ltr.bed $tmp_dir/${prefix}-merged-samples-plus.bam > $tmp_dir/${prefix}-peaks-ltr-coverage-plus.bed
 
-echo "5. Compute coverage for gene peaks"
-samtools bedcov $tmp_dir/${prefix}-peaks-gene.bed $tmp_dir/${prefix}-merged-samples-minus.bam > $tmp_dir/${prefix}-peaks-gene-coverage-minus.bed
-samtools bedcov $tmp_dir/${prefix}-peaks-gene.bed $tmp_dir/${prefix}-merged-samples-plus.bam > $tmp_dir/${prefix}-peaks-gene-coverage-plus.bed
+# echo "5. Compute coverage for gene peaks"
+# samtools bedcov $tmp_dir/${prefix}-peaks-gene.bed $tmp_dir/${prefix}-merged-samples-minus.bam > $tmp_dir/${prefix}-peaks-gene-coverage-minus.bed
+# samtools bedcov $tmp_dir/${prefix}-peaks-gene.bed $tmp_dir/${prefix}-merged-samples-plus.bam > $tmp_dir/${prefix}-peaks-gene-coverage-plus.bed
 
 echo "6. Assign strand to LTR peaks"
-paste $tmp_dir/${prefix}-peaks-ltr-coverage-plus.bed $tmp_dir/${prefix}-peaks-ltr-coverage-minus.bed |
-    awk '{print $0"\t+"$12-$24}' |
-    awk 'BEGIN{FS=OFS="\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
-    awk -F"\t" '{OFS=FS}{ $6=$25 ; print }' |
-    cut -f1-11 > $tmp_dir/${prefix}-peaks-ltr-strand.bed
+paste <(awk -v OFS="\t" '{$1=$1; print}' $tmp_dir/${prefix}-peaks-ltr-coverage-plus.bed) \
+      <(awk -v OFS="\t" '{$1=$1; print}' $tmp_dir/${prefix}-peaks-ltr-coverage-minus.bed) |
+awk 'BEGIN {OFS="\t"} {
+    strand = ($12 - $24 >= 0 ? "+" : "-");
+    $6 = strand;
+    print
+}' | cut -f1-11 > $tmp_dir/${prefix}-peaks-ltr-strand.bed
+
+# paste $tmp_dir/${prefix}-peaks-ltr-coverage-plus.bed $tmp_dir/${prefix}-peaks-ltr-coverage-minus.bed |
+#     awk '{print $0"\t+"$12-$24}' |
+#     awk 'BEGIN{FS=OFS="\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
+#     awk -F"\t" '{OFS=FS}{ $6=$25 ; print }' |
+#     cut -f1-11 > $tmp_dir/${prefix}-peaks-ltr-strand.bed
 
 echo "7. Assign strand to gene peaks"
-paste $tmp_dir/${prefix}-peaks-gene-coverage-plus.bed $tmp_dir/${prefix}-peaks-gene-coverage-minus.bed |
-    awk '{print $0"\t+"$12-$24}' |
-    awk 'BEGIN{FS=OFS="\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
-    awk -F"\t" '{OFS=FS}{ $6=$25 ; print }' |
-    cut -f1-11  > $tmp_dir/${prefix}-peaks-gene-strand.bed
+paste <(awk -v OFS="\t" '{$1=$1; print}' $tmp_dir/${prefix}-peaks-gene-coverage-plus.bed) \
+      <(awk -v OFS="\t" '{$1=$1; print}' $tmp_dir/${prefix}-peaks-gene-coverage-minus.bed) |
+awk 'BEGIN {OFS="\t"} {
+    strand = ($12 - $24 >= 0 ? "+" : "-");
+    $6 = strand;
+    print
+}' | cut -f1-11 > $tmp_dir/${prefix}-peaks-gene-strand.bed
+
+# paste $tmp_dir/${prefix}-peaks-gene-coverage-plus.bed $tmp_dir/${prefix}-peaks-gene-coverage-minus.bed |
+#     awk '{print $0"\t+"$12-$24}' |
+#     awk 'BEGIN{FS=OFS="\t"} {gsub(/+-[0-9]*/, "-" $3)} 1 {gsub(/+[0-9]*/, "+" $3)} 1' |
+#     awk -F"\t" '{OFS=FS}{ $6=$25 ; print }' |
+#     cut -f1-11  > $tmp_dir/${prefix}-peaks-gene-strand.bed
 
 echo "8. Annotate peaks with gene information"
 bedtools sort -i $gene_bed | uniq >  $tmp_dir/${prefix}-mart-export-sorted.bed
