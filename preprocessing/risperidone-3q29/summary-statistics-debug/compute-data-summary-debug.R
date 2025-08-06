@@ -1,4 +1,4 @@
-compute_data_summary <- function(spatial_data,
+compute_data_summary_v2 <- function(spatial_data,
                                  resolution = 0.8,
                                  trim = 0.05,
                                  num_cores = 24,
@@ -121,7 +121,7 @@ compute_data_summary <- function(spatial_data,
 }
 
 
-res <- compute_data_summary(
+res <- compute_data_summary_v2(
   spatial_data        = ris3q29_st_data,
   resolution          = data_params_df[29, 2],
   trim                = 0.05,
@@ -129,9 +129,42 @@ res <- compute_data_summary(
   control_samples     = samples_wt,
   experiment_samples  = samples_del,
   data_type           = data_params_df[5, 1],
-  metrics             = "mean",
+  metrics             = c("mean", "median", "sum"),
   verbose             = TRUE
 )
 
+test_res <- perform_statistical_tests_v2(
+  spatial_data         = ris3q29_st_data,
+  summary_data         = res,
+  metric               = c("mean"),
+  resolution           = data_params_df[29, 2],
+  num_cores            = 20,
+  mean_threshold       = 0,
+  control_samples      = samples_wt,
+  experiment_samples   = samples_del,
+  quantile_normalization = FALSE,
+  verbose              = TRUE
+)
 
-res$
+
+result <- summarize_and_test_v2(
+  spatial_data         = ris3q29_st_data,
+  trim                 = 0.05,
+  data_params_df       = data_params_df[c(1,5), , drop = FALSE],
+  control_samples      = samples_wt,
+  experiment_samples   = samples_del,
+  summary_metrics      = c("mean", "median", "sum"),
+  statistic_metrics    = c("mean", "median"),
+  mean_threshold       = 0,
+  num_cores            = 20,
+  verbose              = TRUE
+)
+
+
+result$range_normalize$resolution_0.2$cluster_15
+
+
+# test_res$cluster_0$statistics$mean$
+
+
+

@@ -464,56 +464,6 @@ perform_statistical_tests2 <-
 }
 
 
-# summarize_and_test <-function(spatial_data,
-#                               trim = 0.05,
-#                               num_cores = 24,
-#                               data_params_df,
-#                               control_samples,
-#                               experiment_samples,
-#                               mean_threshold = 0,
-#                               metrics = c("mean", "median")){
-# 
-#   result_summary_statistics <- list()
-# 
-#   for(i in 1:nrow(data_params_df)){
-#     data_type <- data_params_df[i,1]
-#     resolution <- data_params_df[i,2]
-#     data_type_name <- data_params_df[i,3]
-#     quantile_normalization <- data_params_df[i, 4]
-# 
-#     print(data_type)
-#     print(resolution)
-# 
-# 
-#     compute_data_summary(spatial_data = spatial_data,
-#                          resolution = resolution,
-#                          trim = trim,
-#                          num_cores = num_cores,
-#                          control_samples = control_samples,
-#                          experiment_samples = experiment_samples,
-#                          data_type = data_type,
-#                          metrics = metrics) -> summary_data
-# 
-#     for(metric in  c("mean", "median")){
-#       perform_statistical_tests(spatial_data = spatial_data,
-#                                 summary_data = summary_data,
-#                                 metric = metric,
-#                                 resolution = resolution,
-#                                 num_cores = num_cores,
-#                                 mean_threshold = mean_threshold,
-#                                 control_samples = control_samples,
-#                                 experiment_samples = experiment_samples,
-#                                 quantile_normalization = quantile_normalization) -> summary_data
-#     }
-#     name_resolution <- paste0("resolution_", resolution)
-# 
-#     result_summary_statistics[[data_type_name]][[name_resolution]] <- summary_data
-# 
-#   }
-# 
-#   return(result_summary_statistics)
-# }
-
 
 summarize_and_test <- function(spatial_data,
                                trim = 0.05,
@@ -567,6 +517,8 @@ summarize_and_test <- function(spatial_data,
   
   return(result_summary_statistics)
 }
+
+
 
 
 # Function to filter cluster statistics

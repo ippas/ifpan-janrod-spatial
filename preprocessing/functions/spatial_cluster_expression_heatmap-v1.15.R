@@ -1,4 +1,4 @@
-spatial_cluster_expression_heatmap <- function(data, genes, cluster_name, metadata,
+spatial_generate_cluster_heatmap <- function(data, genes, cluster_name, metadata,
                                      group1 = NULL, group2 = NULL,
                                      colors_group1 = NULL, colors_group2 = NULL,
                                      data_type = "raw_data", resolution = "resolution_0.4",

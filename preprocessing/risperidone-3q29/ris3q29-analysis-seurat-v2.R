@@ -1,16 +1,9 @@
 # read function
-setwd("/home/mateusz/projects/ifpan-janrod-spatial")
-
 source("preprocessing/functions/functions-spatial-data.R")
 source("preprocessing/functions/statistics-functions.R")
 source("preprocessing/functions/statistics-functions-v2.R")
 source("preprocessing/functions/visualization-functions.R")
 source("preprocessing/functions/umi-per-spot.R")
-
-
-source("preprocessing/functions/global-summary-espression.R")
-source("preprocessing/functions/spatial_cluster_expression_heatmap-v1.15.R")
-source("preprocessing/functions/spatial-generate-global-heatmap.R")
 
 # executes seurat analysis for risperidone
 path_to_data <- "data/risperidone-3q29/spaceranger-corrected/"
@@ -22,7 +15,7 @@ dims <- 1:30
 
 # read metadata for risperidone
 metadata_ris3q29 <- read_metadata(file_path = "data/risperidone-3q29/metadata-3q29-ris.tsv", 
-                                           treatments = c("saline", "risperidone")) 
+                                  treatments = c("saline", "risperidone")) 
 
 # create sample_names vector contain id samples to analysis
 sample_names <- metadata_ris3q29$sample_ID
@@ -65,41 +58,43 @@ barcode_ris3q29 <- create_barcode_data(
 
 ################################################################################
 ris3q29_st_data <- create_spatial_data(sample_names = sample_names,
-                                                metadata = metadata_ris3q29,
-                                                barcode_info = barcode_ris3q29,
-                                                images_info = images_ris3q29,
-                                                integrated_data = ris3q29_integrate,
-                                                peaks_info = info_peaks_ris3q29)
+                                       metadata = metadata_ris3q29,
+                                       barcode_info = barcode_ris3q29,
+                                       images_info = images_ris3q29,
+                                       integrated_data = ris3q29_integrate,
+                                       peaks_info = info_peaks_ris3q29)
 
 ris3q29_st_data <- add_seurat_data(spatial_data = ris3q29_st_data,
-                                            integrated_data = ris3q29_integrate)
+                                   integrated_data = ris3q29_integrate)
 
 ris3q29_st_data <- add_filtered_data(spatial_data = ris3q29_st_data,
-                                              mean_expression_threshold = 0.5)
+                                     mean_expression_threshold = 0.5)
 
 ris3q29_st_data <- add_colfilt_data(spatial_data = ris3q29_st_data,
-                                             min_spot_threshold = 0,
-                                             expression_threshold = 2)
+                                    min_spot_threshold = 0,
+                                    expression_threshold = 2)
 
 ris3q29_st_data <- add_range_normalize_data(spatial_data = ris3q29_st_data,
-                                                     range = 1500,
-                                                     flatten = 1,
-                                                     threshold = 500)
+                                            range = 1500,
+                                            flatten = 1,
+                                            threshold = 500)
 
 ris3q29_st_data <- add_clusters_data(spatial_data = ris3q29_st_data,
-                                              integrated_data = ris3q29_integrate,
-                                              resolution_start = 0.05,
-                                              resolution_end = 2,
-                                              resolution_step = 0.05)
+                                     integrated_data = ris3q29_integrate,
+                                     resolution_start = 0.05,
+                                     resolution_end = 2,
+                                     resolution_step = 0.05)
 
 ris3q29_st_data <- evaluate_clustering_stability(spatial_data = ris3q29_st_data,
-                                                          seurat_object = ris3q29_integrate,
-                                                          resolution_start = 0.05,
-                                                          resolution_end = 2,
-                                                          resolution_step = 0.05)
+                                                 seurat_object = ris3q29_integrate,
+                                                 resolution_start = 0.05,
+                                                 resolution_end = 2,
+                                                 resolution_step = 0.05)
+
+
 
 ################################################################################
-# POPRAWIĆ NAZWY
+
 
 for(resolution in c(0.05, 0.1, 0.15, 0.2, 0.4, 0.8)){
   ris3q29_st_data <-
@@ -115,6 +110,18 @@ for(resolution in c(0.05, 0.1, 0.15, 0.2, 0.4, 0.8)){
 ris3q29_st_data$stability_results %>%
   ggplot(aes(x = resolution, y = silhouette_score)) +
   geom_line()
+
+########################################################################
+# save to .RData files
+
+save(ris3q29_integrate,
+     file = "results/risperidone-3q29/ris3q29_integrate.RData")
+
+
+save(ris3q29_st_data,
+     file = "results/risperidone-3q29/ris3q29_st_data.RData")
+
+#######################################################################
 
 
 
@@ -160,6 +167,11 @@ data_type_name = c(
   mutate(quantile_normalization = ifelse(data_type_name == "quantile_metric", TRUE, FALSE)) -> data_params_df
 
 
+data_params_df %>% 
+  filter(resolution %in% c(0.1, 0.2, 0.4)) %>% 
+  filter(!(data_type_name %in% c("seurat", "quantile_metric"))) -> data_params_df
+
+
 # visualization test
 samples_salWt <- metadata_ris3q29 %>% 
   filter(treatment == "saline" & mouse_genotype == "wtwt") %>%
@@ -202,16 +214,6 @@ summarize_and_test_v2(
   verbose              = TRUE
 ) -> salWtSalDel_summary_statistics
 
-# summarize_and_test(spatial_data = ris3q29_st_data,
-#                    trim = 0.05, 
-#                    num_cores = 16,
-#                    data_params_df = data_params_df,
-#                    control_samples = samples_salWt,
-#                    experiment_samples = samples_salDel,
-#                    mean_threshold = 0,
-#                    statistic_metrics = c("mean", "median", "sum"),
-#                    metrics = c("mean", "median", "skewness", "kurtosis", "sum")) -> salWtSalDel_summary_statistics
-
 save(salWtSalDel_summary_statistics, file = "results/risperidone-3q29/salWtSalDel_summary_statistics.RData")
 rm(salWtSalDel_summary_statistics)
 
@@ -227,16 +229,6 @@ summarize_and_test_v2(
   num_cores            = 16,
   verbose              = TRUE
 )  -> risWtRisDel_summary_statistics
-
-# summarize_and_test(spatial_data = ris3q29_st_data,
-#                    trim = 0.05, 
-#                    num_cores = 16,
-#                    data_params_df = data_params_df,
-#                    control_samples = samples_risWt,
-#                    experiment_samples = samples_risDel,
-#                    mean_threshold = 0,
-#                    statistic_metrics = c("mean", "median", "sum"),
-#                    metrics = c("mean", "median", "skewness", "kurtosis", "sum")) -> risWtRisDel_summary_statistics
 
 save(risWtRisDel_summary_statistics, file = "results/risperidone-3q29/risWtRisDel_summary_statistics.RData")
 rm(risWtRisDel_summary_statistics)
@@ -254,16 +246,6 @@ summarize_and_test_v2(
   verbose              = TRUE
 )  -> wtDel_summary_statistics
 
-# summarize_and_test(spatial_data = ris3q29_st_data,
-#                    trim = 0.05,
-#                    num_cores = 16,
-#                    data_params_df = data_params_df,
-#                    control_samples = samples_wt,
-#                    experiment_samples = samples_del,
-#                    mean_threshold = 0,
-#                    statistic_metrics = c("mean", "median", "sum"),
-#                    metrics = c("mean", "median", "skewness", "kurtosis", "sum")) -> wtDel_summary_statistics
-
 save(wtDel_summary_statistics, file = "results/risperidone-3q29/wtDel_summary_statistics.RData")
 rm(wtDel_summary_statistics)
 
@@ -280,16 +262,6 @@ summarize_and_test_v2(
   verbose              = TRUE
 ) -> risWtSalWt_summary_statistics
 
-# summarize_and_test(spatial_data = ris3q29_st_data,
-#                    trim = 0.05, 
-#                    num_cores = 16,
-#                    data_params_df = data_params_df,
-#                    control_samples = samples_salWt,
-#                    experiment_samples = samples_risWt,
-#                    mean_threshold = 0,
-#                    statistic_metrics = c("mean", "median", "sum"),
-#                    metrics = c("mean", "median", "skewness", "kurtosis", "sum")) -> risWtSalWt_summary_statistics
-
 save(risWtSalWt_summary_statistics, file = "results/risperidone-3q29/risWtSalWt_summary_statistics.RData")
 
 
@@ -305,16 +277,6 @@ summarize_and_test_v2(
   num_cores            = 16,
   verbose              = TRUE
 ) -> risDelSalDel_summary_statistics
-
-# summarize_and_test(spatial_data = ris3q29_st_data,
-#                    trim = 0.05, 
-#                    num_cores = 16,
-#                    data_params_df = data_params_df,
-#                    control_samples = samples_salDel,
-#                    experiment_samples = samples_risDel,
-#                    mean_threshold = 0,
-#                    statistic_metrics = c("mean", "median", "sum"),
-#                    metrics = c("mean", "median", "skewness", "kurtosis", "sum")) -> risDelSalDel_summary_statistics
 
 save(risDelSalDel_summary_statistics, file = "results/risperidone-3q29/risDelSalDel_summary_statistics.RData")
 

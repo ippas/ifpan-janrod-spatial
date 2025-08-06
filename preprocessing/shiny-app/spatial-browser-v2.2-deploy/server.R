@@ -6,7 +6,7 @@ server <- function(input, output, session) {
   # -----------------------------
   
   vals <- reactiveValues(
-    resolution = 0.5,
+    resolution = 0.4,
     select_clusters = as.character(0:29),
     resolution_expr = 0.4,
     select_clusters_expr = as.character(0:29)
@@ -119,8 +119,20 @@ server <- function(input, output, session) {
       paste0("cluster-", input$dataset, "-res", vals$resolution, ".png")
     },
     content = function(file) {
-      png(file, width = as.integer(input$width_plot), height = as.integer(input$height_plot))
-      print(output$clust_plot())
+      png(file, width = as.integer(input$width_plot), height = as.integer(input$height_plot), res = input$dpi_svg)
+      print(
+        spatial_cluster_select(
+          spatial_data = get(dataset_config()$spatial_data),
+          resolution = vals$resolution,
+          samples = c(input$control_selected, input$case_selected),
+          palette = palette_allen,
+          size = input$spot_size,
+          select_clusters = vals$select_clusters,
+          tif_image = input$tif_image,
+          ncol = as.numeric(input$num_columns)
+        ) +
+          patchwork::plot_layout(ncol = as.numeric(input$num_columns))
+      )
       dev.off()
     }
   )
@@ -130,8 +142,24 @@ server <- function(input, output, session) {
       paste0("cluster-", input$dataset, "-res", vals$resolution, ".svg")
     },
     content = function(file) {
-      svg(file, width = as.integer(input$width_plot) / 100, height = as.integer(input$height_plot) / 100)
-      print(output$clust_plot())
+      svg(
+        filename = file,
+        width = as.integer(input$width_plot) / 100,
+        height = as.integer(input$height_plot) / 100
+      )
+      print(
+        spatial_cluster_select(
+          spatial_data = get(dataset_config()$spatial_data),
+          resolution = vals$resolution,
+          samples = c(input$control_selected, input$case_selected),
+          palette = palette_allen,
+          size = input$spot_size,
+          select_clusters = vals$select_clusters,
+          tif_image = input$tif_image,
+          ncol = as.numeric(input$num_columns)
+        ) +
+          patchwork::plot_layout(ncol = as.numeric(input$num_columns))
+      )
       dev.off()
     }
   )
