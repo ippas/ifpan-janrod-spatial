@@ -53,8 +53,9 @@ plot_gene_heatmap_from_bundle(
   ),
   zscore_colors = c("navy","white","firebrick3"),
   scale_by_row = TRUE,
-  scale_limits = c(-2, 2),
-  row_names_simple = T
+  row_names_simple = T,
+  impute_by_group = F,
+  scale_limits = c(-2, 2)
 ) -> tmp
 
 
@@ -134,4 +135,43 @@ plot_gene_heatmap_group_ratios_from_bundle(
     treatment      = c("saline" = "#66c2a5", "risperidone" = "#fc8d62")
   ),
   row_names_simple = TRUE
+)
+
+
+plot_gene_heatmap_from_bundle(
+  bundle      = ris3q29_bundle_data_to_visualization,
+  peaks_df    = df,
+  peak_col    = "name_id",
+  cluster_col = "cluster",
+  data_type   = "qn",             # albo "raw"
+  log2_transform = FALSE,
+  pseudocount = 1,
+  zscore_colors = c("navy", "white", "firebrick3"),
+  scale_by_row = TRUE,
+  impute_by_group = T,
+  scale_limits = c(-2, 2),
+  group_cols = c("mouse_genotype", "treatment"),
+  palette = list(
+    mouse_genotype = c("wtwt" = "#8da0cb", "wtdel" = "#e78ac3"),
+    treatment      = c("saline" = "#66c2a5", "risperidone" = "#fc8d62")
+  ),
+  row_names_simple = T        # pokaże pełne nazwy z cluster|peak
+)
+
+plot_gene_heatmap_from_bundle(
+  bundle      = ris3q29_bundle_data_to_visualization,
+  peaks_df    = df,
+  peak_col    = "name_id",
+  cluster_col = "cluster",
+  data_type   = "qn",
+  group_cols  = c("mouse_genotype","treatment"),
+  group_palette = list(
+    treatment      = c("saline"="#66c2a5","risperidone"="#fc8d62"),
+    mouse_genotype = c("wtwt"="#8da0cb","wtdel"="#e78ac3")
+  ),
+  cluster_order = paste0("cluster_", 0:19),
+  zscore_colors = c("navy", "white", "firebrick3"),
+  impute_by_group = F,
+  add_marker_for_imputed_data = TRUE
+  
 )
