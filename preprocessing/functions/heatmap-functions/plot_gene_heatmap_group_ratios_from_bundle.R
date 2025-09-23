@@ -1,5 +1,4 @@
-
-plot_gene_heatmap_group_means_from_bundle <- function(
+plot_gene_heatmap_group_ratios_from_bundle <- function(
   bundle,
   peaks_df,
   peak_col    = "peak_id",
@@ -7,12 +6,15 @@ plot_gene_heatmap_group_means_from_bundle <- function(
   data_type   = c("raw","qn"),
   log2_transform = TRUE,
   pseudocount = 1,
+  ratio_eps = 1e-9,                    # używane tylko gdy log2_transform = FALSE
+  baseline_treatment = "saline",       # referencja do dzielenia w obrębie genotypu
   group_cols = c("mouse_genotype","treatment"),
-  group_order = NULL,  # 👈 ręczna kolejność grup
+  group_order = c("wtwt_saline","wtwt_risperidone",
+                  "wtdel_saline","wtdel_risperidone"),
   group_palette = NULL,
   palette = NULL,
   zscore_colors = c("blue","white","red"),
-  cluster_order = NULL, # 👈 ręczna kolejność klastrów
+  cluster_order = NULL,
   scale_by_row = TRUE,
   scale_limits = c(-2, 2),
   cluster_rows = TRUE,
@@ -56,14 +58,11 @@ plot_gene_heatmap_group_means_from_bundle <- function(
   if (length(df_list) == 0) stop("❌ Żaden z podanych peaków nie został znaleziony w klastrach!")
   
   df_long <- dplyr::bind_rows(df_list) %>%
-    tidyr::pivot_longer(
-      cols = -c(peak_id, cluster),
-      names_to = "sample_ID",
-      values_to = "value"
-    ) %>%
+    tidyr::pivot_longer(cols = -c(peak_id, cluster),
+                        names_to = "sample_ID", values_to = "value") %>%
     dplyr::left_join(bundle$metadata, by = "sample_ID")
   
-  # ---- log2 transform ----
+  # ---- log2 transform (opcjonalnie przed agregacją) ----
   if (isTRUE(log2_transform)) {
     df_long <- dplyr::mutate(df_long, value = log2(value + pseudocount))
   }
@@ -75,38 +74,52 @@ plot_gene_heatmap_group_means_from_bundle <- function(
                         sep = "_", drop = TRUE)
   )
   
-  # ---- detect available group levels ----
-  group_levels <- df_long %>%
-    dplyr::distinct(dplyr::across(dplyr::all_of(group_cols))) %>%
-    dplyr::arrange(dplyr::across(dplyr::all_of(group_cols))) %>%
-    dplyr::mutate(group = interaction(dplyr::across(dplyr::all_of(group_cols)),
-                                      sep = "_", drop = TRUE)) %>%
-    dplyr::pull(group)
+  # ---- aggregate (średnia per peak × cluster × grupa) ----
+  df_agg <- df_long %>%
+    dplyr::group_by(cluster, peak_id, group,
+                    dplyr::across(dplyr::all_of(group_cols))) %>%
+    dplyr::summarise(value = mean(value, na.rm = TRUE), .groups = "drop")
   
-  if (is.null(group_order)) {
-    group_order <- group_levels
+  # ---- compute ratio/log2FC względem baseline_treatment w obrębie genotypu ----
+  if (isTRUE(log2_transform)) {
+    # mamy już log2(qn + pc) → log2FC = log2(x) - log2(baseline)
+    df_ratio <- df_agg %>%
+      dplyr::group_by(cluster, peak_id, mouse_genotype) %>%
+      dplyr::mutate(
+        baseline = value[treatment == baseline_treatment],
+        value = value - baseline   # log2(qn/saline)
+      ) %>%
+      dplyr::ungroup()
+    legend_name <- "log2(qn/saline)"
   } else {
-    missing_groups <- setdiff(group_order, group_levels)
-    if (length(missing_groups) > 0) {
-      warning("⚠️ Grupy z group_order nie znalezione w danych: ",
-              paste(missing_groups, collapse = ", "))
-    }
+    # bez log2: licz prawdziwy stosunek qn/saline (z eps, by uniknąć /0)
+    df_ratio <- df_agg %>%
+      dplyr::group_by(cluster, peak_id, mouse_genotype) %>%
+      dplyr::mutate(
+        baseline = value[treatment == baseline_treatment],
+        value = (value + ratio_eps) / (baseline + ratio_eps)
+      ) %>%
+      dplyr::ungroup()
+    legend_name <- "qn/saline"
   }
   
-  # ---- aggregate ----
-  df_agg <- df_long %>%
-    dplyr::group_by(cluster, peak_id, group) %>%
-    dplyr::summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
+  # komunikat o brakach baseline
+  if (any(!is.finite(df_ratio$baseline))) {
+    warning("⚠️ Brak wartości baseline (", baseline_treatment,
+            ") dla części wierszy — te wiersze będą pominięte.")
+  }
+  
+  df_ratio <- df_ratio %>%
+    dplyr::filter(is.finite(value)) %>%
     dplyr::mutate(peak_label = paste(cluster, peak_id, sep = "|"))
   
   # ---- build matrix ----
-  heat_mat <- df_agg %>%
+  heat_mat <- df_ratio %>%
     dplyr::select(peak_label, group, value) %>%
     tidyr::pivot_wider(names_from = group, values_from = value) %>%
     tibble::column_to_rownames("peak_label") %>%
     as.matrix()
   
-  # ---- force column order ----
   available_cols <- colnames(heat_mat)
   common_cols <- intersect(group_order, available_cols)
   if (length(common_cols) == 0) {
@@ -119,37 +132,34 @@ plot_gene_heatmap_group_means_from_bundle <- function(
   mode(heat_mat) <- "numeric"
   
   if (return_matrix) {
-    message("📤 Returning preprocessed group-mean matrix (no z-score).")
+    message("📤 Returning matrix: ", legend_name)
     return(heat_mat)
   }
   
   # ---- row labels ----
   row_labels <- if (row_names_simple) {
-    vapply(
-      strsplit(gsub(".*\\|", "", rownames(heat_mat)), "-", fixed = TRUE),
-      function(parts) parts[length(parts)],
-      character(1)
-    )
+    vapply(strsplit(gsub(".*\\|", "", rownames(heat_mat)), "-", fixed = TRUE),
+           function(parts) parts[length(parts)], character(1))
   } else rownames(heat_mat)
   
-  # ---- row-wise zscore ----
+  # ---- optional row-wise z-score ----
   if (scale_by_row) {
     heat_mat <- t(scale(t(heat_mat)))
     heat_mat[heat_mat < scale_limits[1]] <- scale_limits[1]
     heat_mat[heat_mat > scale_limits[2]] <- scale_limits[2]
   }
   
-  # ---- row split (numeric order!) ----
+  # ---- row split (kolejność klastrów) ----
   row_split <- gsub("\\|.*", "", rownames(heat_mat))
   if (is.null(cluster_order)) {
-    row_split_num <- as.integer(gsub("cluster_", "", row_split))
+    row_split_num <- suppressWarnings(as.integer(gsub("cluster_", "", row_split)))
     cluster_levels <- paste0("cluster_", sort(unique(row_split_num)))
   } else {
     cluster_levels <- cluster_order
   }
   row_split <- factor(row_split, levels = cluster_levels, ordered = TRUE)
   
-  # ---- color palettes ----
+  # ---- palety do adnotacji kolumn ----
   pal_final <- if (!is.null(group_palette)) group_palette else if (!is.null(palette)) palette else
     list(
       treatment = c("saline" = "#1f77b4", "risperidone" = "#ff7f0e"),
@@ -159,26 +169,52 @@ plot_gene_heatmap_group_means_from_bundle <- function(
   library(ComplexHeatmap)
   library(circlize)
   
-  col_fun <- circlize::colorRamp2(
-    breaks = c(scale_limits[1], 0, scale_limits[2]),
-    colors = zscore_colors
-  )
+  # ---- color function (zależna od trybu) ----
+  if (scale_by_row) {
+    # z-score → symetryczne limity wokół 0
+    col_fun <- circlize::colorRamp2(
+      breaks = c(scale_limits[1], 0, scale_limits[2]),
+      colors = zscore_colors
+    )
+    legend_title <- "z-score"
+  } else if (isTRUE(log2_transform)) {
+    # log2(qn/saline) → centrum 0, zakres dynamiczny symetryczny
+    max_abs <- max(abs(heat_mat), na.rm = TRUE)
+    col_fun <- circlize::colorRamp2(
+      breaks = c(-max_abs, 0, max_abs),
+      colors = zscore_colors
+    )
+    legend_title <- legend_name  # "log2(qn/saline)"
+  } else {
+    # qn/saline → centrum 1, zakres dynamiczny (może być niesymetryczny)
+    min_v <- min(heat_mat, na.rm = TRUE)
+    max_v <- max(heat_mat, na.rm = TRUE)
+    # zabezpieczenie, gdy wszystko == 1
+    if (!is.finite(min_v) || !is.finite(max_v) || min_v == max_v) {
+      min_v <- 0.5; max_v <- 1.5
+    }
+    col_fun <- circlize::colorRamp2(
+      breaks = c(min_v, 1, max_v),
+      colors = zscore_colors
+    )
+    legend_title <- legend_name  # "qn/saline"
+  }
   
   # ---- column annotation ----
   annot_df <- data.frame(group = colnames(heat_mat)) %>%
     tidyr::separate(group, into = group_cols, sep = "_", remove = FALSE)
   
   ha <- ComplexHeatmap::HeatmapAnnotation(
-    df  = annot_df[group_cols],
+    df = annot_df[group_cols],
     col = pal_final,
     annotation_height = grid::unit(4, "mm"),
     gp = grid::gpar(col = NA)
   )
   
-  message("🔥 Drawing group-mean heatmap...")
+  message("🔥 Drawing heatmap (", legend_title, ") ...")
   ht <- ComplexHeatmap::Heatmap(
     heat_mat,
-    name = "z-score",
+    name = legend_title,
     row_labels = row_labels,
     top_annotation = ha,
     col = col_fun,
@@ -193,7 +229,8 @@ plot_gene_heatmap_group_means_from_bundle <- function(
     row_title_rot = 0,
     row_title_gp = grid::gpar(fontface = "bold"),
     show_column_names = TRUE,
-    column_title = sprintf("Group-mean Heatmap (%s counts)", data_type),
+    column_title = sprintf("Group-wise %s Heatmap (%s counts)",
+                           legend_title, data_type),
     row_names_gp = grid::gpar(fontsize = 8)
   )
   
@@ -206,4 +243,3 @@ plot_gene_heatmap_group_means_from_bundle <- function(
   
   invisible(ht)
 }
-

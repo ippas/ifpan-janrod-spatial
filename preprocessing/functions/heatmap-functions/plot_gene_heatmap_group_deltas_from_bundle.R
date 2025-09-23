@@ -1,3 +1,6 @@
+
+
+
 plot_gene_heatmap_group_deltas_from_bundle <- function(
   bundle,
   peaks_df,
@@ -153,6 +156,17 @@ plot_gene_heatmap_group_deltas_from_bundle <- function(
   }
   row_split <- factor(row_split, levels = cluster_levels)
   
+  # ---- dynamic legend title ----
+  scale_label <- switch(data_type,
+                        qn  = "QN scale",
+                        raw = "raw counts"
+  )
+  legend_title <- if (isTRUE(log2_transform)) {
+    sprintf("Δ expression (log2, %s)", scale_label)
+  } else {
+    sprintf("Δ expression (%s)", scale_label)
+  }
+  
   # ---- color palette ----
   library(ComplexHeatmap)
   library(circlize)
@@ -173,29 +187,35 @@ plot_gene_heatmap_group_deltas_from_bundle <- function(
   message("🔥 Drawing delta heatmap with fixed cluster order...")
   ht <- ComplexHeatmap::Heatmap(
     delta_mat,
-    name = if (scale_by_row) "delta (z-score)" else "delta (log2)",
+    name = legend_title,
     row_labels = row_labels,
     col = col_fun,
     border = draw_border,
     border_gp = grid::gpar(col = border_col, lwd = border_lwd),
     cluster_rows = cluster_rows,
-    cluster_row_slices = FALSE,           # ❗ wyłącza sortowanie bloków
+    cluster_row_slices = FALSE,
     cluster_columns = cluster_columns,
     clustering_distance_rows = "euclidean",
     clustering_method_rows = "complete",
     row_split = row_split,
-    row_order = NULL,                     # używa kolejności factor levels
+    row_order = NULL,
     row_gap = row_gap,
     row_title_rot = 0,
     row_title_gp = grid::gpar(fontface = "bold"),
     show_column_names = TRUE,
-    column_title = sprintf("Group-delta Heatmap (%s counts)", data_type),
-    row_names_gp = grid::gpar(fontsize = 8)
+    column_title = sprintf("Group-delta Heatmap (%s)", scale_label),
+    row_names_gp = grid::gpar(fontsize = 8),
+    heatmap_legend_param = list(
+      direction = "horizontal",      # 🔥 pozioma legenda
+      title_position = "topcenter",
+      labels_gp = grid::gpar(fontsize = 8)
+    )
   )
   
   ComplexHeatmap::draw(
     ht,
     heatmap_legend_side = "bottom",
+    annotation_legend_side = "bottom",
     merge_legends = TRUE
   )
   
