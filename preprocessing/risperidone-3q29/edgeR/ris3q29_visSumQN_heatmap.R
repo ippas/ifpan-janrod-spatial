@@ -58,7 +58,7 @@ plot_gene_heatmap_from_bundle(
   scale_limits = c(-2, 2)
 ) -> tmp
 
-
+svg("results/risperidone-3q29/figures/heatmap-6.10.2025//heatmap-MeanGroup-4columns-6.10.2025.svg", width = 4, height = 20)
 plot_gene_heatmap_group_means_from_bundle(
   bundle      = ris3q29_bundle_data_to_visualization,
   peaks_df    = df,
@@ -67,8 +67,8 @@ plot_gene_heatmap_group_means_from_bundle(
   data_type   = "qn",
   log2_transform = TRUE,
   pseudocount = 1,
-  group_cols = c("treatment","mouse_genotype"),
-  # group_order = c("wtwt_saline", "wtwt_risperidone", "wtdel_saline", "wtdel_risperidone"),
+  group_cols = c("mouse_genotype", "treatment"),
+  group_order = c("wtwt_saline", "wtwt_risperidone", "wtdel_saline", "wtdel_risperidone"),
   # cluster_order = paste0("cluster_", 0:19),
   palette = list(
     mouse_genotype = c("wtwt" = "#8da0cb", "wtdel" = "#e78ac3"),
@@ -79,6 +79,7 @@ plot_gene_heatmap_group_means_from_bundle(
   scale_limits = c(-2, 2),
   row_names_simple = TRUE
 )
+dev.off()
 
 plot_gene_heatmap_group_deltas_from_bundle(
   bundle      = ris3q29_bundle_data_to_visualization,
@@ -150,6 +151,12 @@ plot_gene_heatmap_from_bundle(
   scale_by_row = TRUE,
   impute_by_group = T,
   scale_limits = c(-2, 2),
+  exclude_samples = c("S13839Nr4", "S13839Nr10", "S13839Nr13", 
+                      "S13839Nr16", "S13839Nr24", "S13839Nr25",
+                      "S13839Nr2", "S13839Nr7", "S13839Nr8",
+                      "S13839Nr9", "S13839Nr15", "S13839Nr17",
+                      "S13839Nr19", "S13839Nr21", "S13839Nr21",
+                      "S13839Nr23"),
   group_cols = c("mouse_genotype", "treatment"),
   palette = list(
     mouse_genotype = c("wtwt" = "#8da0cb", "wtdel" = "#e78ac3"),
@@ -173,5 +180,4 @@ plot_gene_heatmap_from_bundle(
   zscore_colors = c("navy", "white", "firebrick3"),
   impute_by_group = F,
   add_marker_for_imputed_data = TRUE
-  
 )
