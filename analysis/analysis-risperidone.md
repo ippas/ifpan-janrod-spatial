@@ -150,3 +150,18 @@ bash preprocessing/spaceranger-analysis.sh \
   --samples `cat data/metadata-antipsychotics.tsv | sed 1d | cut -f1 | tr "\n" "," | sed 's/,$/\n/'`
   --localcores 40
 ```
+
+
+
+##### Supplementary analysis: 18.03.2026
+Run spaceranger, on default reference, and half slide json files
+```
+bash preprocessing/spaceranger-analysis-v1.1.sh \
+  --transcriptome raw/refdata-gex-mm10-2020-A/ \
+  --output-dir data/risperidone/spaceranger_defaultReference_half_18.03.2026 \
+  --metadata data/metadata-antipsychotics.tsv \
+  --samples S6230Nr3,S6230Nr4,S6269Nr1,S6269Nr2,S6269Nr3,S6269Nr4,S7788Nr1,S7788Nr2,S7788Nr3,S7788Nr11,S7788Nr15,S7788Nr16 \
+  --json-sufix half \
+  --localcores 8 \
+  --localmem 50
+```

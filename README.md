@@ -110,7 +110,15 @@ bash preprocessing/spaceranger-analysis.sh \
 ### [Analysis risperidone](https://github.com/ippas/ifpan-janrod-spatial/blob/master/analysis/analysis-risperidone.md)
 
 
-
+### Example command to run shiny app
+```
+docker run --rm -p 4000:3838  \
+  -v /home/mateusz/projects/ifpan-janrod-spatial/preprocessing/functions:/home/rstudio/preprocessing/functions \
+  -v /home/mateusz/projects/ifpan-janrod-spatial/data:/home/rstudio/data \
+  -v /home/mateusz/projects/ifpan-janrod-spatial/results:/home/rstudio/results \
+  -v /home/mateusz/projects/ifpan-janrod-spatial/preprocessing/shiny-app/spatial-browser-v2.2-deploy:/srv/shiny-server/ \
+  -v /home/mateusz/projects/ifpan-janrod-spatial/preprocessing/shiny-app/spatial-browser-v2.2-deploy:/etc/shiny-server/   matzieb/shiny-4.0.3-seurat4-spatial
+```
 
 ## About this template
 Directories:
