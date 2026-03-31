@@ -1,0 +1,104 @@
+
+library(dplyr)
+library(tidyr)
+library(ComplexHeatmap)
+library(circlize)
+library(tibble)
+
+# --- 1️⃣ Przygotowanie danych i obliczenie z-score względem saline w obrębie genotypu
+df <- data_to_heatmap_test %>% 
+  as.data.frame() %>% 
+  rownames_to_column(var = "rowname") %>% 
+  separate(rowname, into = c("cluster", "name_id"), sep = "\\|") %>% 
+  separate(name_id, into = c("peak_id", "gene_symbol"),
+           sep = "-(?=[^-]+$)", remove = FALSE) %>% 
+  gather(key = "sample_ID", value = "value",
+         -cluster, -name_id, -peak_id, -gene_symbol) %>% 
+  left_join(metadata_ris3q29[, c("sample_ID", "mouse_genotype", "treatment")],
+            by = "sample_ID") %>% 
+  mutate(group = paste0(mouse_genotype, "_", treatment)) %>%
+  
+  # --- 🔹 Z-score względem "saline" w obrębie tego samego genotypu
+  group_by(cluster, name_id, peak_id, gene_symbol, mouse_genotype) %>%
+  mutate(
+    mean_ctrl = mean(value[treatment == "saline"], na.rm = TRUE),
+    sd_ctrl   = sd(value[treatment == "saline"], na.rm = TRUE),
+    sd_ctrl   = ifelse(is.na(sd_ctrl) | sd_ctrl == 0, 1, sd_ctrl),
+    zscore    = (value - mean_ctrl) / sd_ctrl
+  ) %>%
+  ungroup() %>%
+  
+  # --- Dodatkowe kolumny identyfikacyjne
+  mutate(
+    cluster_nameID = paste0(cluster, "_", name_id),
+    column_ID = paste0(sample_ID, "_", group)
+  )
+
+# --- 2️⃣ Przygotowanie macierzy do heatmapy
+mat <- df %>%
+  select(cluster_nameID, column_ID, zscore) %>%
+  pivot_wider(names_from = column_ID, values_from = zscore) %>%
+  column_to_rownames("cluster_nameID") %>%
+  as.matrix()
+
+mat[is.na(mat)] <- 0  # uzupełnij brakujące wartości
+
+# --- 3️⃣ Kolejność grup (WT-saline → WT-risperidone → DEL-saline → DEL-risperidone)
+group_order <- c("wtwt_saline", "wtwt_risperidone", "wtdel_saline", "wtdel_risperidone")
+
+groups <- gsub(".*_(wtwt_saline|wtwt_risperidone|wtdel_saline|wtdel_risperidone)$",
+               "\\1", colnames(mat))
+
+group_colors <- c(
+  "wtwt_saline" = "#66c2a5",
+  "wtwt_risperidone" = "#fc8d62",
+  "wtdel_saline" = "#8da0cb",
+  "wtdel_risperidone" = "#e78ac3"
+)
+
+# --- posortuj kolumny wg nowej kolejności grup (blokowo)
+col_order <- order(factor(groups, levels = group_order))
+mat <- mat[, col_order]
+groups <- groups[col_order]
+
+# --- 4️⃣ Adnotacje nad kolumnami
+ha_col <- HeatmapAnnotation(
+  Group = groups,
+  col = list(Group = group_colors),
+  annotation_height = unit(4, "mm")
+)
+
+# --- 5️⃣ Kolory i klastrowanie
+col_fun <- colorRamp2(c(-3, 0, 3), c("navy", "white", "firebrick3"))
+
+# --- 6️⃣ Rysowanie heatmapy
+ht <- Heatmap(
+  mat,
+  name = "Z-score (vs saline per genotype)",
+  col = col_fun,
+  cluster_rows = TRUE,
+  cluster_columns = FALSE,   # 👈 zachowujemy blokowy układ
+  show_row_names = TRUE,           
+  show_column_names = TRUE,        
+  row_names_gp = gpar(fontsize = 10),
+  column_names_gp = gpar(fontsize = 10, rot = 90),
+  top_annotation = ha_col,
+  column_dend_height = unit(0, "mm"),
+  row_dend_width = unit(30, "mm"),
+  heatmap_legend_param = list(
+    title = "Z-score (vs saline)",
+    title_gp = gpar(fontsize = 10, fontface = "bold"),
+    labels_gp = gpar(fontsize = 8)
+  ),
+  column_title = "Sample ID and Group (Normalized to saline per genotype)",
+  row_title = "Cluster | Name ID",
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  row_title_gp = gpar(fontsize = 12, fontface = "bold")
+)
+
+# --- 7️⃣ Rysuj z legendą na dole
+draw(
+  ht,
+  heatmap_legend_side = "bottom",
+  annotation_legend_side = "bottom"
+)

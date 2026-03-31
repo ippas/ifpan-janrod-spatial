@@ -167,3 +167,22 @@ spatial_cluster_expression_heatmap <- function(data, genes, cluster_name, metada
   
   invisible(ht)
 }
+
+spatial_cluster_expression_heatmap(
+  data            = wtDel_summary_statistics,
+  genes           = genes_del3q29,
+  data_type       = "quantile_normalize",
+  resolution      = "resolution_0.4",
+  summary_metric  = "mean",
+  scale_range     = c(-2, 2),
+  cluster_name    = "cluster_1",
+  metadata        = sample_info,
+  group1          = "mouse_genotype",
+  group2          = "treatment",
+  colors_group1   = c("wtwt" = "red", "wtdel" = "blue"),
+  colors_group2   = c("saline" = "orange", "risperidone" = "green"),
+  title           = "Cluster 0; sum", 
+  remove_empty_rows = TRUE,
+  colors_on_heatmap = c("#6a89b1ff", "white", "#832524ff")
+)
+

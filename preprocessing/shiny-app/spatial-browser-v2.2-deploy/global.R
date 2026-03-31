@@ -9,11 +9,24 @@ require(shiny)
 require(shinydashboard)
 
 
-load("/home/rstudio/results/risperidone/risperidone-half.RData")
-message("Loaded: risperidone-half.RData")
+# load("/home/rstudio/results/risperidone/risperidone-half.RData")
+# message("Loaded: risperidone-half.RData")
 
-load("/home/rstudio/results/pz1190/pz1190-half.RData")
-message("Loaded: pz1190-half.RData")
+#load("/home/rstudio/results/risperidone/risperidone-half_minNumberSpot15.RData")
+#message("Loaded: risperidone-half_minNumberSpot15.RData")
+
+load("/home/rstudio/results/risperidone/risperidone-half_minNumberSpot_17.03.2026.RData")
+message("Loaded: risperidone-half_minNumberSpot20.RData")
+
+# load("/home/rstudio/results/risperidone/risperidone_defaultRef_17.03.2026.RData")
+# message("Loaded: risperidone_defaultRef_17.03.2026.RData")
+
+load("/home/rstudio/results/risperidone/risperidone_defaultReferenceClustersCustomRef_18.03.2026.RData")
+message("Loaded: risperidone_defaultReferenceClustersCustomRef_18.03.2026.RData")
+
+
+# load("/home/rstudio/results/pz1190/pz1190-half.RData")
+# message("Loaded: pz1190-half.RData")
 
 load("/home/rstudio/results/clozapine/clozapine-half.RData")
 message("Loaded: clozapine-half.RData")
@@ -65,16 +78,51 @@ samples_del <- c("S13839Nr2", "S13839Nr6", "S13839Nr7", "S13839Nr8",
 
 # ==== Dataset registry ====
 dataset_registry <- list(
-  "Risperidone" = list(
+  # "Risperidone" = list(
+  #   spatial_data = "risperidone_st_data_half",
+  #   summary_data = "risperidone_summary_statistics_half",
+  #   case_samples = "samples_risperidone",
+  #   control_samples = "samples_saline"
+  # ),
+ # "Risperidone_minSpotThr15" = list(
+ #   spatial_data = "risperidone_st_data_half",
+ #   summary_data = "risperidone_summary_statistics_half_minNumberSpot15",
+ #   case_samples = "samples_risperidone",
+ #   control_samples = "samples_saline"
+ # ),
+  
+  "Risperidone_17.03.2026" = list(
     spatial_data = "risperidone_st_data_half",
-    summary_data = "risperidone_summary_statistics_half",
+    summary_data = "risperidone_summary_statistics_half_minNumberSpot20",
     case_samples = "samples_risperidone",
     control_samples = "samples_saline"
   ),
-  "PZ-1190" = list(
-    spatial_data = "pz1190_st_data_half",
-    summary_data = "pz1190_summary_statistics_half",
-    case_samples = "samples_pz1190",
+  
+  "Risperidone_defaultReferenceClusterCustomRef_17.03.2026" = list(
+    spatial_data = "risperidone_st_data_half_defaultReferenceClustersCustomRef",
+    summary_data = "risperidone_summary_statistics_half_defaultReferenceClustersCustomRef",
+    case_samples = "samples_risperidone",
+    control_samples = "samples_saline"
+  ),
+  
+  # "Risperidone_defaultReference_17.03.2026" = list(
+  #   spatial_data = "risperidone_st_data_half_defaultReference",
+  #   summary_data = "risperidone_summary_statistics_half_defaultReference",
+  #   case_samples = "samples_risperidone",
+  #   control_samples = "samples_saline"
+  # ),
+  # 
+  
+  # "PZ-1190" = list(
+  #   spatial_data = "pz1190_st_data_half",
+  #   summary_data = "pz1190_summary_statistics_half",
+  #   case_samples = "samples_pz1190",
+  #   control_samples = "samples_saline"
+  # ),
+  "Clozapine" = list(
+    spatial_data = "clozapine_st_data_half",
+    summary_data = "clozapine_summary_statistics_half",
+    case_samples = "samples_clozapine",
     control_samples = "samples_saline"
   ),
   "risWtSalWt" = list(

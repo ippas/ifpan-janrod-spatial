@@ -233,8 +233,17 @@ perform_statistical_tests <-
       experiment_sd <- apply(experiment_expression, 1, sd, na.rm = T)
       
       # # Calculate the Standard Error (SE) for each row in control_expression and experiment_expression
-      control_se <- apply(control_expression, 1, function(row) {sd(row) / sqrt(length(row))})
-      experiment_se <- apply(experiment_expression, 1, function(row) {sd(row) / sqrt(length(row))})
+      control_se <- apply(control_expression, 1, function(row) {
+        row <- row[!is.na(row)]
+        sd(row) / sqrt(length(row))
+      })
+      
+      experiment_se <- apply(experiment_expression, 1, function(row) {
+        row <- row[!is.na(row)]
+        sd(row) / sqrt(length(row))
+      })
+      # control_se <- apply(control_expression, 1, function(row) {sd(row) / sqrt(length(row))})
+      # experiment_se <- apply(experiment_expression, 1, function(row) {sd(row) / sqrt(length(row))})
       
       
       log2ratio <- log2(rowMeans(experiment_expression, na.rm = TRUE) / rowMeans(control_expression, na.rm = TRUE)) %>%

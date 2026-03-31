@@ -178,6 +178,6 @@ plot_gene_heatmap_from_bundle(
   ),
   cluster_order = paste0("cluster_", 0:19),
   zscore_colors = c("navy", "white", "firebrick3"),
-  impute_by_group = F,
+  impute_by_group = t,
   add_marker_for_imputed_data = TRUE
 )

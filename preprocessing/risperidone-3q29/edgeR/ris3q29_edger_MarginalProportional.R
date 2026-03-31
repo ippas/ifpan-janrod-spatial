@@ -607,7 +607,7 @@ plot_gene_boxplot_from_bundle <- function(
     p <- p + ggplot2::facet_wrap(~ name_id, scales = "free_y")
   }
   
-  return(p)http://localhost:9777/graphics/plot_zoom_png?width=815&height=900
+  return(p)
 }
 
 

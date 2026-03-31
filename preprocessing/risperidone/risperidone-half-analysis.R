@@ -141,11 +141,11 @@ data_type_name = c(
 summarize_and_test(spatial_data = risperidone_st_data_half,
                    trim = 0.05, 
                    num_cores = 24,
-                   data_params_df = data_params_df,
+                   data_params_df = data_params_df[3,],
                    control_samples = samples_saline,
                    experiment_samples = samples_risperidone,
                    mean_threshold = 0,
-                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics_half
+                   metrics = c("mean", "median", "skewness", "kurtosis")) -> risperidone_summary_statistics_half_v2
 
 save(samples_saline,
      samples_risperidone,
