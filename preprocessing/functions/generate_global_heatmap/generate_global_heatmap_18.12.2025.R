@@ -945,12 +945,16 @@ generate_global_heatmap(
   aggregate_by_gene = T,
   aggregate_genes = "sum",
   cluster_rows = F,
-  save_svg = "/home/mateusz/projects/ifpan-janrod-spatial/results/risperidone-3q29/figures/heatmap_expressionGeneDeletion_numOrder_20.02.2026.svg",
+  # save_svg = "/home/mateusz/projects/ifpan-janrod-spatial/results/risperidone-3q29/figures/heatmap_expressionGeneDeletion_numOrder_20.02.2026.svg",
   svg_width = 10,
   svg_height = 7,
   row_order = c("Bdh1", "Dlg1", "Pigz", "Senp5", "Pak2", "Pigx", "Cep19", "Nrros", "Fbxo45", "Wdr53", "Rnf168", "Tctex1d2", "Pcyt1a", "Tfrc" ),
-  sample_order = c("S13839Nr1", "S13839Nr5", "S13839Nr12", "S13839Nr20", "S13839Nr22",
-                   "S13839Nr4", "S13839Nr10", "S13839Nr13", "S13839Nr16", "S13839Nr24", "S13839Nr25", 
-                   "S13839Nr6", "S13839Nr11", "S13839Nr14", "S13839Nr18", "S13839Nr26",
-                   "S13839Nr2", "S13839Nr7", "S13839Nr8", "S13839Nr9", "S13839Nr15", "S13839Nr17", "S13839Nr19", "S13839Nr21", "S13839Nr23")
+  # sample_order = c("S13839Nr1", "S13839Nr5", "S13839Nr12", "S13839Nr20", "S13839Nr22",
+  #                  "S13839Nr4", "S13839Nr10", "S13839Nr13", "S13839Nr16", "S13839Nr24", "S13839Nr25", 
+  #                  "S13839Nr6", "S13839Nr11", "S13839Nr14", "S13839Nr18", "S13839Nr26",
+  #                  "S13839Nr2", "S13839Nr7", "S13839Nr8", "S13839Nr9", "S13839Nr15", "S13839Nr17", "S13839Nr19", "S13839Nr21", "S13839Nr23")
+  sample_order = c("S13839Nr1", "S13839Nr12", "S13839Nr20", "S13839Nr22", "S13839Nr5",
+                   "S13839Nr10", "S13839Nr13", "S13839Nr16", "S13839Nr24", "S13839Nr25","S13839Nr4", 
+                   "S13839Nr11", "S13839Nr14", "S13839Nr18", "S13839Nr26", "S13839Nr6",
+                   "S13839Nr15", "S13839Nr17", "S13839Nr19", "S13839Nr2",  "S13839Nr21", "S13839Nr23", "S13839Nr7", "S13839Nr8", "S13839Nr9")
 )

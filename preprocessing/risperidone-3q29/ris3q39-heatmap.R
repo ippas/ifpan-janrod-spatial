@@ -243,3 +243,4 @@ ggplot() +
     legend.box         = "horizontal",
     plot.margin        = margin(t = 80, r = 10, b = 10, l = 10)
   )
+

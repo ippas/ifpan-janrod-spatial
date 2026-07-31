@@ -303,7 +303,7 @@ ris2q29_summary_global_expression <- compute_global_expression_multi(
 generate_global_heatmap(
   data               = ris2q29_summary_global_expression,
   genes              = genes_del3q29,
-  summary_metric     = "mean",
+  summary_metric     = "sum",
   data_type          = "quantile_normalize_resolution_0.4",
   # data_type          = "raw_data",
   metadata           = sample_info,

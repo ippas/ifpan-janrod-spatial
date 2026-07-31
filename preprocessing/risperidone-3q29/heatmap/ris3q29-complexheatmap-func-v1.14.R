@@ -173,7 +173,7 @@ spatial_cluster_expression_heatmap(
   genes           = genes_del3q29,
   data_type       = "quantile_normalize",
   resolution      = "resolution_0.4",
-  summary_metric  = "mean",
+  summary_metric  = "sum",
   scale_range     = c(-2, 2),
   cluster_name    = "cluster_1",
   metadata        = sample_info,
