@@ -201,9 +201,9 @@ Marker genes were identified by comparing spots assigned to each cluster with al
 
 The clustering resolution was selected based on a combination of:
 
-- **Average Silhouette Width (ASW)**, assessing transcriptional separation and within-cluster similarity;
-- **Percentage of Abnormal Spots (PAS)**, assessing local spatial homogeneity;
-- **Spatial Chaos Score (CHAOS)**, assessing spatial continuity of clusters;
+- [**Average Silhouette Width (ASW)**](https://doi.org/10.1186/s13059-024-03361-0) to assess cluster separation and within-cluster similarity, with higher values indicating better-defined clusters;
+- [**Percentage of Abnormal Spots (PAS)**](https://doi.org/10.1186/s13059-024-03361-0) to assess local spatial homogeneity, with lower values indicating fewer spots inconsistent with their surrounding cluster;
+- [**Spatial Chaos Score (CHAOS)**](https://doi.org/10.1186/s13059-024-03361-0) to assess spatial continuity, with lower values indicating more spatially coherent clusters;
 - spatial localization of the identified clusters;
 - expression of cluster-enriched marker genes and their correspondence with expected anatomical structures;
 - expert assessment of the anatomical organization of the brain sections.
