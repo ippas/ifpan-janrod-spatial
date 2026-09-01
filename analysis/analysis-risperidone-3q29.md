@@ -17,7 +17,7 @@ bash preprocessing/spaceranger-analysis-v2.sh \
   --localcores 20
 ```
 
-The script runs `spaceranger count` using the specified transcriptome reference (`--transcriptome`), output directory (`--output-dir`), sample metadata (`--metadata`), selected sample IDs (`--samples`), input sequencing data directory (`--input-directory`), and number of processing cores (`--localcores`).
+The script runs spaceranger count using the specified transcriptome reference (--transcriptome), output directory (--output-dir), sample metadata (--metadata), selected sample IDs (--samples), input sequencing data directory (--input-directory), and number of processing cores (--localcores). For each sample, the metadata file provides the corresponding Visium slide ID, capture area, tissue-positioning JSON file and sample-specific information required to match the sequencing data with the spatial image. FASTQ files are retrieved from the specified input directory.
 
 ---
 
