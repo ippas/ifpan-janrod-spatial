@@ -6,6 +6,14 @@ This repository contains scripts and analysis workflows for spatial transcriptom
 - **Analyses** – experimental design, analysis workflow and publication information for each dataset.
 - **Interactive spatial transcriptomics browser** – interactive exploration of spatial clusters, gene expression and statistical results.
 
+#### Repository structure
+
+* `analysis/` – experiment-specific analysis documentation;
+* `preprocessing/` – preprocessing, integration, statistical analysis and visualization scripts;
+* `data/` – processed data, metadata and reference files; not stored in the Git repository;
+* `results/` – analysis outputs, tables and figures; not stored in the Git repository.
+
+
 ## 1. Reference data used in the analyses
 
 Several reference datasets were used across the spatial transcriptomics analyses:
